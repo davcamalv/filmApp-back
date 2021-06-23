@@ -40,7 +40,7 @@ public class WatsonService {
 	}
 
 	public String createSession(Long userId) {
-		User user = userService.findOne(userId);
+		User user = userService.findOne(userId).get();
 		String assistantId = configurationService.getByProperty("watson.assistant.id").getValue();
 		Session session = sessionService.getSessionByUser(user);
 		Calendar calendar = Calendar.getInstance();
