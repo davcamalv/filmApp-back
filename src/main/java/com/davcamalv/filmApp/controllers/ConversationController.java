@@ -2,13 +2,17 @@ package com.davcamalv.filmApp.controllers;
 
 import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.davcamalv.filmApp.dtos.MessageDto;
+import com.davcamalv.filmApp.domain.User;
+import com.davcamalv.filmApp.dtos.MessageDTO;
+import com.davcamalv.filmApp.services.UserService;
 import com.davcamalv.filmApp.services.WatsonService;
 
 @RestController
@@ -20,9 +24,15 @@ public class ConversationController{
 	@Autowired
 	private WatsonService watsonService;
 	
-	@PostMapping("/sendMessage/{idUsuario}")
-	public String list(@PathVariable Long idUsuario, @RequestBody MessageDto message){
-		log.info("POST /api/session/sendMessage/" + idUsuario);
-		return watsonService.sendMessage(idUsuario, message);
+	@Autowired
+	private UserService userService;
+	
+	@PostMapping("/sendMessage")
+	public String list(@RequestBody MessageDTO message){
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+		User user = userService.getByUsername(userDetails.getUsername()).get();
+		log.info("POST /api/session/sendMessage");
+		return watsonService.sendMessage(user.getId(), message);
 	}
 }

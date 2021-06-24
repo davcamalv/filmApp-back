@@ -5,6 +5,7 @@ import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -26,26 +27,22 @@ public class User {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 	
-	@SafeHtml
 	@Column(name = "name")
 	private String name;
 	
 	@NotNull
-	@SafeHtml
 	@Column(name = "username", unique = true, nullable = false)
 	private String username;
 	
 	@NotNull
-	@SafeHtml
 	@Column(name = "password")
 	private String password;
 	
-	@ManyToMany
+	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "user_rol", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "rol_id"))
 	private Set<Rol> roles = new HashSet<>();
 	
 	@Email
-	@SafeHtml
 	@Column(name = "email")
 	private String email;
 
