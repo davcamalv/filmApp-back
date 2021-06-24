@@ -1,16 +1,19 @@
 package com.davcamalv.filmApp.domain;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
 import com.davcamalv.filmApp.enums.RoleName;
 
 @Entity
+@Table(name = "rol")
 public class Rol {
 
 	@Id
@@ -19,6 +22,7 @@ public class Rol {
 	private Long id;
 	
 	@NotNull
+	@Column(name = "role_name")
 	@Enumerated(EnumType.STRING)
 	private RoleName roleName;
 
@@ -30,8 +34,6 @@ public class Rol {
 		super();
 		this.roleName = roleName;
 	}
-
-
 
 	public Long getId() {
 		return id;
