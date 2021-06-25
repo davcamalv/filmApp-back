@@ -1,10 +1,17 @@
 package com.davcamalv.filmApp.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
@@ -20,25 +27,37 @@ public class User {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 	
-	@SafeHtml
 	@Column(name = "name")
 	private String name;
 	
 	@NotNull
-	@SafeHtml
 	@Column(name = "username", unique = true, nullable = false)
 	private String username;
 	
 	@NotNull
-	@SafeHtml
 	@Column(name = "password")
 	private String password;
 	
+	@ManyToMany(fetch = FetchType.EAGER)
+	@JoinTable(name = "user_rol", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "rol_id"))
+	private Set<Rol> roles = new HashSet<>();
+	
 	@Email
-	@SafeHtml
 	@Column(name = "email")
 	private String email;
 
+	public User(String name, @NotNull String username, @NotNull String password, @Email String email) {
+		super();
+		this.name = name;
+		this.username = username;
+		this.password = password;
+		this.email = email;
+	}
+
+	public User() {
+		super();
+	}
+	
 	public Long getId() {
 		return id;
 	}
@@ -77,5 +96,13 @@ public class User {
 
 	public void setEmail(String email) {
 		this.email = email;
+	}
+
+	public Set<Rol> getRoles() {
+		return roles;
+	}
+
+	public void setRoles(Set<Rol> roles) {
+		this.roles = roles;
 	}
 }

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.davcamalv.filmApp.domain.Session;
 import com.davcamalv.filmApp.domain.User;
-import com.davcamalv.filmApp.dtos.MessageDto;
+import com.davcamalv.filmApp.dtos.MessageDTO;
 import com.ibm.cloud.sdk.core.security.Authenticator;
 import com.ibm.cloud.sdk.core.security.IamAuthenticator;
 import com.ibm.watson.assistant.v2.Assistant;
@@ -40,7 +40,7 @@ public class WatsonService {
 	}
 
 	public String createSession(Long userId) {
-		User user = userService.findOne(userId);
+		User user = userService.findOne(userId).get();
 		String assistantId = configurationService.getByProperty("watson.assistant.id").getValue();
 		Session session = sessionService.getSessionByUser(user);
 		Calendar calendar = Calendar.getInstance();
@@ -75,11 +75,11 @@ public class WatsonService {
 		return sessionId;
 	}
 
-	public String sendMessage(Long idUsuario, MessageDto message) {
+	public String sendMessage(Long idUsuario, MessageDTO message) {
 		String assistantId = configurationService.getByProperty("watson.assistant.id").getValue();
 		Assistant assistant = getAssistant();
 		String sessionId = createSession(idUsuario);
-		MessageInput input = new MessageInput.Builder().messageType("text").text(message.getText()).build();
+		MessageInput input = new MessageInput.Builder().messageType("text").text(message.getMessage()).build();
 		MessageOptions messageOptions = new MessageOptions.Builder(assistantId, sessionId).input(input).build();
 		MessageResponse response = assistant.message(messageOptions).execute().getResult();
 		return response.getOutput().getGeneric().get(0).text();
