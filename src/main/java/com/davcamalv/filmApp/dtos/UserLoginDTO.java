@@ -1,13 +1,9 @@
 package com.davcamalv.filmApp.dtos;
 
-import javax.validation.constraints.NotBlank;
-
 public class UserLoginDTO {
 
-	@NotBlank
 	private String username;
 	
-	@NotBlank
 	private String password;
 
 	public String getUsername() {
