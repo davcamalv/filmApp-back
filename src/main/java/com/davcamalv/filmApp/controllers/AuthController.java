@@ -34,8 +34,13 @@ public class AuthController {
 	private JwtProvider jwtProvider;
 
 	@PostMapping("/new")
-	public void newUser(@RequestBody NewUserDTO newUserDTO) {
+	public JwtDTO newUser(@RequestBody NewUserDTO newUserDTO) {
 		userService.createNewUser(newUserDTO);
+		Authentication authentication = authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(newUserDTO.getUsername(), newUserDTO.getPassword()));
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+		String jwt = jwtProvider.generateToken(authentication);
+		return new JwtDTO(jwt);
 	}
 
 	@PostMapping("/login")

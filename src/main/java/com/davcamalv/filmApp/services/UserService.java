@@ -63,7 +63,7 @@ public class UserService {
 	
 	private void validateNewUserDTO(NewUserDTO newUserDTO) {
 		if(newUserDTO.getName() == "" || newUserDTO.getPassword() == "" ||  newUserDTO.getUsername() == "") {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username alredy exists");	
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Params are required");	
 		}
 		
 		if(existsByUsername(newUserDTO.getUsername())) {
