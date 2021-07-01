@@ -30,7 +30,7 @@ public class ConversationController{
 	private UserService userService;
 	
 	@PostMapping("/sendMessage")
-	public String list(@RequestBody MessageDTO message){
+	public MessageDTO list(@RequestBody MessageDTO message){
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 		User user = userService.getByUsername(userDetails.getUsername()).get();
