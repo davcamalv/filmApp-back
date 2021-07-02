@@ -29,6 +29,9 @@ public class WatsonService {
 
 	@Autowired
 	private UserService userService;
+	
+	@Autowired
+	private MessageService messageService;
 
 	public Assistant getAssistant() {
 		Authenticator authenticator = new IamAuthenticator(
@@ -75,13 +78,14 @@ public class WatsonService {
 		return sessionId;
 	}
 
-	public String sendMessage(Long idUsuario, MessageDTO message) {
+	public MessageDTO sendMessage(Long idUsuario, MessageDTO message) {
+		messageService.saveUserMessage(message);
 		String assistantId = configurationService.getByProperty("watson.assistant.id").getValue();
 		Assistant assistant = getAssistant();
 		String sessionId = createSession(idUsuario);
 		MessageInput input = new MessageInput.Builder().messageType("text").text(message.getMessage()).build();
 		MessageOptions messageOptions = new MessageOptions.Builder(assistantId, sessionId).input(input).build();
 		MessageResponse response = assistant.message(messageOptions).execute().getResult();
-		return response.getOutput().getGeneric().get(0).text();
+		return messageService.processResponse(response);
 	}
 }

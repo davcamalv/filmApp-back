@@ -3,6 +3,7 @@ package com.davcamalv.filmApp.domain;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -15,8 +16,6 @@ import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
-
-import org.hibernate.validator.constraints.SafeHtml;
 
 @Entity
 @Table(name = "chat_user")

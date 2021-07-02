@@ -55,7 +55,6 @@ public class AuthController {
 	@PostMapping("/refresh")
 	public JwtDTO refresh(@RequestBody JwtDTO jwtDTO) throws ParseException {
 		String token = jwtProvider.refreshToken(jwtDTO);
-		jwtDTO = new JwtDTO(token);
 		return new JwtDTO(token);
 	}
 }

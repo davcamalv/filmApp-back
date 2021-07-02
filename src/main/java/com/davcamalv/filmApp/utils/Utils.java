@@ -11,4 +11,9 @@ public class Utils {
 		Matcher matcher = pattern.matcher(email);
 		return matcher.matches();
 	}
+
+	public static String makeSafeMessage(String message) {
+		return message.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;")
+				.replace("&", "&amp;");
+	}
 }
