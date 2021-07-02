@@ -5,8 +5,11 @@ public class JwtDTO {
 	private String token;
 	
 	public JwtDTO(String token) {
-		super();
 		this.token = token;
+	}
+	
+	public JwtDTO() {
+		super();
 	}
 
 	public String getToken() {
