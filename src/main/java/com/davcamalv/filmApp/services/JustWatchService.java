@@ -16,7 +16,6 @@ public class JustWatchService {
 
 	public void getPremieres() {
 		try {
-			System.setProperty("webdriver.chrome.driver","C:\\bin\\chromedriver.exe");
 			ChromeOptions options = new ChromeOptions();
 			options.setHeadless(false);
 			WebDriver webDriver = new ChromeDriver(options);
