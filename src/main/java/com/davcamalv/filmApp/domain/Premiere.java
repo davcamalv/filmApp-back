@@ -10,6 +10,8 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.OnDelete;
@@ -25,6 +27,7 @@ public class Premiere {
 	private Long id;
 	
 	@NotNull
+    @Temporal(TemporalType.DATE)
 	@Column(name = "premiere_date")
 	private Date premiereDate;
 	
