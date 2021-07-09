@@ -163,7 +163,7 @@ public class MessageService {
 				}
 				message = message + " (" + type + ", "
 						+ new SimpleDateFormat("dd/MM/yyyy").format(premiere.getPremiereDate()) + ")" + "</p><br>";
-				message = message + "<img style='display:block; margin:auto; width: 60%;' src="
+				message = message + "<img style='display:block; margin:auto; width: 60%; border-radius: 5px' src="
 						+ premiere.getMediaContent().getPoster() + " ><br><br>";
 			}
 		}
