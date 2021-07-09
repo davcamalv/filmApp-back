@@ -9,6 +9,9 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import javax.validation.constraints.NotNull;
@@ -19,19 +22,20 @@ public class Session {
 
 	@Id
 	@NotNull
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-	
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private Long id;
+
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	@OneToOne
 	@JoinColumn(name = "user_id", nullable = false)
-    private User user;
-	
+	private User user;
+
 	@NotNull
 	@Column(name = "watson_session")
 	private String watsonSession;
-	
+
 	@NotNull
+	@Temporal(TemporalType.TIMESTAMP)
 	@Column(name = "last_use")
 	private Date date;
 
@@ -66,6 +70,5 @@ public class Session {
 	public void setDate(Date date) {
 		this.date = date;
 	}
-	
-	
+
 }
