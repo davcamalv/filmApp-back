@@ -52,14 +52,17 @@ public class MediaContent {
 	private String poster;
 	
 	@Column(name = "score")
-	private Double score;
+	private String score;
 	
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "media_content_platform", joinColumns = @JoinColumn(name = "media_content_id"), inverseJoinColumns = @JoinColumn(name = "platform_id"))
 	private List<Platform> platforms;
+	
+	@Column(name = "search_performed")
+	private boolean searchPerformed;
 
 	public MediaContent(String title, String description, MediaType mediaType, String creationDate, String justWatchUrl,
-			String imdbId, String poster, Double score, List<Platform> platforms) {
+			String imdbId, String poster, String score, List<Platform> platforms) {
 		super();
 		this.title = title;
 		this.description = description;
@@ -140,11 +143,11 @@ public class MediaContent {
 		this.poster = poster;
 	}
 
-	public Double getScore() {
+	public String getScore() {
 		return score;
 	}
 
-	public void setScore(Double score) {
+	public void setScore(String score) {
 		this.score = score;
 	}
 
@@ -154,6 +157,14 @@ public class MediaContent {
 
 	public void setPlatforms(List<Platform> platforms) {
 		this.platforms = platforms;
+	}
+
+	public boolean getSearchPerformed() {
+		return searchPerformed;
+	}
+
+	public void setSearchPerformed(boolean searchPerformed) {
+		this.searchPerformed = searchPerformed;
 	}
 	
 }

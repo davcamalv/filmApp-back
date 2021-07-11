@@ -21,9 +21,13 @@ import com.davcamalv.filmApp.domain.Option;
 import com.davcamalv.filmApp.domain.Platform;
 import com.davcamalv.filmApp.domain.Premiere;
 import com.davcamalv.filmApp.domain.Selectable;
+import com.davcamalv.filmApp.dtos.MediaContentDTO;
 import com.davcamalv.filmApp.dtos.MessageDTO;
 import com.davcamalv.filmApp.dtos.OptionDTO;
+import com.davcamalv.filmApp.dtos.PlatformWithPriceDTO;
+import com.davcamalv.filmApp.dtos.SearchDTO;
 import com.davcamalv.filmApp.dtos.SelectableDTO;
+import com.davcamalv.filmApp.enums.MediaType;
 import com.davcamalv.filmApp.enums.SenderType;
 import com.davcamalv.filmApp.repositories.MessageRepository;
 import com.davcamalv.filmApp.utils.Utils;
@@ -34,8 +38,11 @@ import com.ibm.watson.assistant.v2.model.RuntimeResponseGeneric;
 @Service
 public class MessageService {
 
-	private static final String START_P_TAG = "<p style='margin: 0 0 0'>";
-
+	private static final String START_P_TAG = "<p style='margin: 0 0 0; float: left;'>";
+	private static final String END_P_TAG = "</p>";
+	private static final String START_HR_TAG = "<tr>";
+	private static final String END_HR_TAG = "</tr>";
+	private static final String USER_INPUT = "userInput";
 	@Autowired
 	private MessageRepository messageRepository;
 
@@ -51,6 +58,9 @@ public class MessageService {
 	@Autowired
 	private PremiereService premiereService;
 
+	@Autowired
+	private JustWatchService justWatchService;
+
 	public Message saveUserMessage(MessageDTO messageDTO) {
 		Message message = new Message(Utils.makeSafeMessage(messageDTO.getMessage()),
 				SenderType.valueOf(messageDTO.getSender()), userService.getByUserLogged(), false, null);
@@ -63,10 +73,10 @@ public class MessageService {
 		return messageRepository.save(message);
 	}
 
-	public MessageDTO processResponse(MessageResponse response) {
+	public MessageDTO processResponse(MessageResponse response, MessageDTO userMessage) {
 		MessageDTO res;
 		if (response.getOutput().getActions() != null && !response.getOutput().getActions().isEmpty()) {
-			res = processResponseByReflection(response);
+			res = processResponseByReflection(response, userMessage);
 		} else {
 			res = processBasicResponse(response);
 		}
@@ -90,7 +100,7 @@ public class MessageService {
 			String title = output.title();
 			String description = output.description();
 			List<DialogNodeOutputOptionsElement> options = output.options();
-			res = createOptionMessage(title, description, options);
+			res = createWatsonOptionMessage(title, description, options);
 			break;
 		default:
 			String text = Utils.makeSafeMessage(output.text());
@@ -100,11 +110,12 @@ public class MessageService {
 		return res;
 	}
 
-	private MessageDTO processResponseByReflection(MessageResponse response) {
+	private MessageDTO processResponseByReflection(MessageResponse response, MessageDTO userMessage) {
 		MessageDTO res;
 		try {
 			String methodName = response.getOutput().getActions().get(0).getName();
 			Map<String, Object> parameters = response.getOutput().getActions().get(0).getParameters();
+			parameters.put(USER_INPUT, userMessage.getMessage());
 			Method method = getClass().getDeclaredMethod(methodName, Map.class);
 			res = (MessageDTO) method.invoke(this, parameters);
 		} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
@@ -115,7 +126,7 @@ public class MessageService {
 		return res;
 	}
 
-	private MessageDTO getPremieres(Map<String, Object> params) throws ParseException {
+	protected MessageDTO getPremieres(Map<String, Object> params) throws ParseException {
 		Date date = null;
 		String dateStr = (String) params.get("date");
 		String platformStr = (String) params.get("provider");
@@ -128,18 +139,95 @@ public class MessageService {
 			if (optionalPlatform.isPresent()) {
 				platform = optionalPlatform.get();
 			} else {
-				return getPremiereMessageError();
+				return getMessageError("No hay estrenos para la fecha y la plataforma especificadas");
 			}
 		}
 		List<Premiere> premieres = premiereService.getPremiereByDateAndPlatform(date, platform);
 		if (premieres.isEmpty()) {
-			return getPremiereMessageError();
+			return getMessageError("No hay estrenos para la fecha y la plataforma especificadas");
 		}
 		return getPremiereMessage(premieres);
 	}
 
+	protected MessageDTO getSearches(Map<String, Object> params) {
+		String title = (String) params.get(USER_INPUT);
+		List<Option> options;
+		List<SearchDTO> searches = justWatchService.getSearches(title);
+		if (searches.isEmpty()) {
+			return getMessageError("Disculpa, no he encontrado ningún resultado");
+		} else {
+			options = searches.stream().map(x -> new Option(x.getTitle() + " " + x.getYear(), x.getUrl()))
+					.collect(Collectors.toList());
+		}
+		return createOptionMessage("¿A cuál de los siguientes resultados se refiere?", "", options);
+	}
+
+	protected MessageDTO getMediaContent(Map<String, Object> params) {
+		MediaContentDTO mediaContentDTO = justWatchService.getMediaContent((String) params.get(USER_INPUT));
+		if (mediaContentDTO == null) {
+			return getMessageError("No he conseguido obtener información sobre el contenido indicado");
+		}
+		return createMediaContentMessage(mediaContentDTO);
+	}
+
+	private MessageDTO createMediaContentMessage(MediaContentDTO mediaContentDTO) {
+		String message = createImageMessage(mediaContentDTO.getPoster()) + "<br><br>";
+		message = message + createBoldTitleMessage(mediaContentDTO.getTitle(), "h2") + "<br>";
+		message = message + createTextMessage(mediaContentDTO.getDescription()) + "<br>";
+		message = message + "<div>" + createBoldTitleMessage("Año: ", "p") + createTextMessage(" " + mediaContentDTO.getCreationDate()) + "</div>" + "<br>";
+		if (mediaContentDTO.getScore() != null) {
+			message = message + "<div>" + createBoldTitleMessage("Puntuación: ", "p") + createTextMessage(" " + mediaContentDTO.getScore().trim())
+			+ "</div>" + "<br>";
+		}
+		message = message + "<div>" + createBoldTitleMessage("Tipo de contenido: ", "p")
+				+ createTextMessage(mediaContentDTO.getMediaType().equals(MediaType.MOVIE.name()) ? " Película" : " Serie")
+				+ "</div>" + "<br>";
+		message = message + createPricesMessage(mediaContentDTO);
+		return new MessageDTO(message, SenderType.server.name(), false, null);
+	}
+
+	private String createPricesMessage(MediaContentDTO mediaContentDTO) {
+		String res = createBoldTitleMessage("Precios:", "h3") + "<br><br>"; 
+		res = res + "<table style='width: 80%; margin: auto; border: 1px solid; border-collapse: collapse;'>";
+		res = res + START_HR_TAG;
+		res = res + "<th style='border: 1px solid;'><p style='writing-mode: vertical-lr;transform: rotate(180deg);'>Stream</p></th>";
+		res = res + "<td style='border: 1px solid;'>";
+		for (PlatformWithPriceDTO price : mediaContentDTO.getStream()) {
+			res = res + getPricesTd(price);
+		}
+		res = res + "</td>";
+		res = res + END_HR_TAG;
+
+		res = res + START_HR_TAG;
+		res = res + "<th style='border: 1px solid;'><p style='writing-mode: vertical-lr;transform: rotate(180deg);'>Alquilar</p></th>";
+		res = res + "<td style='border: 1px solid;'>";
+
+		for (PlatformWithPriceDTO price : mediaContentDTO.getRent()) {
+			res = res + getPricesTd(price);
+		}
+		res = res + "</td>";
+		res = res + END_HR_TAG;
+
+		res = res + START_HR_TAG;
+		res = res + "<th style='border: 1px solid;'><p style='writing-mode: vertical-lr;transform: rotate(180deg);'>Comprar</p></th>";
+		res = res + "<td style='border: 1px solid;'>";
+		for (PlatformWithPriceDTO price : mediaContentDTO.getBuy()) {
+			res = res + getPricesTd(price);
+		}
+		res = res + "</td>";
+		res = res + END_HR_TAG;
+		res = res + "</table>";
+		return res;
+	}
+
+	private String getPricesTd(PlatformWithPriceDTO streamPrice) {
+		return "<div style='float: left;'><img style='border-radius: 5px;' alt='" + streamPrice.getName() + "' src='"
+				+ streamPrice.getLogo() + "'/><center><p>" + streamPrice.getCost()
+				+ "</p></center></div>";
+	}
+	
 	private MessageDTO getPremiereMessage(List<Premiere> premieres) {
-		String message = START_P_TAG + "Los estrenos son:</p><br>";
+		String message = createTextMessage("Los estrenos son:") + "<br>";
 		String type;
 		Map<String, List<Premiere>> premieresByPlatform = new HashMap<>();
 		premieres.stream().forEach(x -> {
@@ -171,20 +259,28 @@ public class MessageService {
 	}
 
 	private String createImageMessage(String source) {
-		return "<img src=" + source + " >";
+		return "<img style='display:block; margin:auto; width: 80%; border-radius: 5px' src=" + source + " >";
 	}
 
 	private String createTextMessage(String text) {
-		return START_P_TAG + text + "</p>";
+		return START_P_TAG + text + END_P_TAG;
 	}
 
-	private MessageDTO createOptionMessage(String title, String description,
+	private String createBoldTitleMessage(String text, String size) {
+		return "<" + size + " style='font-weight: bold; margin:auto; float: left;'>" + text + "</" + size + ">";
+	}
+
+	private MessageDTO createWatsonOptionMessage(String title, String description,
 			List<DialogNodeOutputOptionsElement> watsonOptions) {
 		List<Option> options = new ArrayList<>();
 		for (DialogNodeOutputOptionsElement watsonOption : watsonOptions) {
 			options.add(new Option(watsonOption.getLabel(), watsonOption.getValue().getInput().text()));
 		}
 
+		return createOptionMessage(title, description, options);
+	}
+
+	private MessageDTO createOptionMessage(String title, String description, List<Option> options) {
 		Selectable selectable = new Selectable(title, description, options);
 		selectable = selectableService.save(selectable);
 		List<OptionDTO> optionsDTO = options.stream().map(x -> new OptionDTO(x.getLabel(), x.getText()))
@@ -194,9 +290,7 @@ public class MessageService {
 				selectableDTO);
 	}
 
-	private MessageDTO getPremiereMessageError() {
-		return new MessageDTO(START_P_TAG + "No hay estrenos para la fecha y la plataforma especificadas</p>",
-				SenderType.server.name(), false, null);
-
+	private MessageDTO getMessageError(String text) {
+		return new MessageDTO(START_P_TAG + text + END_P_TAG, SenderType.server.name(), false, null);
 	}
 }

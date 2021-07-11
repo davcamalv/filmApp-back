@@ -86,6 +86,6 @@ public class WatsonService {
 		MessageInput input = new MessageInput.Builder().messageType("text").text(message.getMessage()).build();
 		MessageOptions messageOptions = new MessageOptions.Builder(assistantId, sessionId).input(input).build();
 		MessageResponse response = assistant.message(messageOptions).execute().getResult();
-		return messageService.processResponse(response);
+		return messageService.processResponse(response, message);
 	}
 }

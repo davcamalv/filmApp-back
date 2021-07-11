@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import javax.transaction.Transactional;
 
@@ -25,7 +26,11 @@ import org.springframework.stereotype.Service;
 import com.davcamalv.filmApp.domain.MediaContent;
 import com.davcamalv.filmApp.domain.Platform;
 import com.davcamalv.filmApp.domain.Premiere;
+import com.davcamalv.filmApp.domain.Price;
+import com.davcamalv.filmApp.dtos.MediaContentDTO;
+import com.davcamalv.filmApp.dtos.PlatformWithPriceDTO;
 import com.davcamalv.filmApp.dtos.SearchDTO;
+import com.davcamalv.filmApp.enums.PriceType;
 
 @Service
 @Transactional
@@ -42,7 +47,10 @@ public class JustWatchService {
 	@Autowired
 	private MediaContentService mediaContentService;
 
-	@Scheduled(cron = "0 50 11 * * ?", zone = "Europe/Paris")
+	@Autowired
+	private PriceService priceService;
+
+	@Scheduled(cron = "0 0 3 * * ?", zone = "Europe/Paris")
 	protected void scrapePremieres() {
 		ChromeOptions options = new ChromeOptions();
 		options.setHeadless(true);
@@ -75,7 +83,8 @@ public class JustWatchService {
 				List<WebElement> mediaContents;
 				for (WebElement providerBlock : providersBlocks) {
 					platformName = providerBlock.findElement(By.tagName("img")).getAttribute("alt");
-					platformLogo = providerBlock.findElement(By.tagName("img")).getAttribute("src");
+					platformLogo = providerBlock.findElement(By.tagName("img")).getAttribute("src").replace("s25",
+							"s100");
 					platform = platformService.getOrCreateByName(platformName, platformLogo);
 					mediaContents = providerBlock.findElements(By.className("horizontal-title-list__item"));
 					getMediaContentData(mediaContents, platform);
@@ -124,14 +133,18 @@ public class JustWatchService {
 		options.setHeadless(true);
 		options.addArguments("window-size=1920,1080");
 		WebDriver webDriver = new ChromeDriver(options);
+		JavascriptExecutor js = (JavascriptExecutor) webDriver;
 		String justWatchUrl;
 		String year;
 		String searchTitle;
 		String poster;
+
 		try {
 			WebDriverWait wait = new WebDriverWait(webDriver, 15);
-			String url = "https://www.justwatch.com/es/buscar?q=" + URLEncoder.encode(title, StandardCharsets.UTF_8.name());
+			String url = "https://www.justwatch.com/es/buscar?q="
+					+ URLEncoder.encode(title, StandardCharsets.UTF_8.name());
 			webDriver.get(url);
+			js.executeScript("window.scrollTo(0,document.body.scrollHeight)");
 			wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("title-list-row")));
 			List<WebElement> searches = webDriver.findElements(By.tagName("ion-row"));
 			for (WebElement search : searches) {
@@ -151,6 +164,94 @@ public class JustWatchService {
 			log.error("Error getting the searches", e);
 		} finally {
 			webDriver.close();
+		}
+		return res;
+	}
+
+	public MediaContentDTO getMediaContent(String url) {
+		MediaContentDTO res = null;
+
+		Optional<MediaContent> mediaContent = mediaContentService.getByJustWatchUrl(url);
+		if (mediaContent.isPresent() && mediaContent.get().getSearchPerformed()) {
+			MediaContent mediaContentValue = mediaContent.get();
+			res = new MediaContentDTO(mediaContentValue.getTitle(), mediaContentValue.getDescription(),
+					mediaContentValue.getMediaType().name(), mediaContentValue.getCreationDate(),
+					mediaContentValue.getPoster(), mediaContentValue.getScore(),
+					priceService.getPlatformsByMediaContentAndPriceType(mediaContentValue, PriceType.RENT),
+					priceService.getPlatformsByMediaContentAndPriceType(mediaContentValue, PriceType.STREAM),
+					priceService.getPlatformsByMediaContentAndPriceType(mediaContentValue, PriceType.BUY));
+		} else if (mediaContent.isPresent()) {
+			MediaContent mediaContentValue = mediaContent.get();
+			res = scrapeMediaContent(url, mediaContentValue);
+		}
+		return res;
+	}
+
+	public MediaContentDTO scrapeMediaContent(String url, MediaContent mediaContentValue) {
+		MediaContentDTO res = null;
+		String score = null;
+		String imdbId = null;
+
+		ChromeOptions options = new ChromeOptions();
+		options.setHeadless(true);
+		options.addArguments("window-size=1920,1080");
+		WebDriver webDriver = new ChromeDriver(options);
+		try {
+			WebDriverWait wait = new WebDriverWait(webDriver, 15);
+			webDriver.get(url);
+			wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("jw-info-box")));
+			String creationDate = webDriver.findElement(By.className("text-muted")).getText();
+			String description = webDriver.findElement(By.className("text-wrap-pre-line"))
+					.findElement(By.tagName("span")).getText();
+			List<WebElement> imdb = webDriver.findElements(By.xpath("//*[@v-uib-tooltip='IMDB']"));
+			if (!imdb.isEmpty()) {
+				score = imdb.get(0).findElement(By.tagName("a")).getText();
+				imdbId = imdb.get(0).findElement(By.tagName("a")).getAttribute("href");
+				imdbId = imdbId.replace("https://www.imdb.com/title/", "").split("//?")[0];
+			}
+			mediaContentValue.setCreationDate(creationDate);
+			mediaContentValue.setDescription(description);
+			mediaContentValue.setScore(score);
+			mediaContentValue.setImdbId(imdbId);
+			mediaContentValue.setSearchPerformed(true);
+			mediaContentService.save(mediaContentValue);
+			List<WebElement> rents = webDriver.findElements(By.className("price-comparison__grid__row--rent"));
+			List<WebElement> streams = webDriver.findElements(By.className("price-comparison__grid__row--stream"));
+			List<WebElement> buyList = webDriver.findElements(By.className("price-comparison__grid__row--buy"));
+			List<PlatformWithPriceDTO> rent = scrapePrices(rents, mediaContentValue, PriceType.RENT);
+			List<PlatformWithPriceDTO> stream = scrapePrices(streams, mediaContentValue, PriceType.STREAM);
+			List<PlatformWithPriceDTO> buy = scrapePrices(buyList, mediaContentValue, PriceType.BUY);
+			res = new MediaContentDTO(mediaContentValue.getTitle(), mediaContentValue.getDescription(),
+					mediaContentValue.getMediaType().name(), mediaContentValue.getCreationDate(),
+					mediaContentValue.getPoster(), mediaContentValue.getScore(), rent, stream, buy);
+		} catch (Exception e) {
+			log.error("Error getting the searches", e);
+		} finally {
+			webDriver.close();
+		}
+		return res;
+	}
+
+	private List<PlatformWithPriceDTO> scrapePrices(List<WebElement> webElements, MediaContent mediaContent,
+			PriceType priceType) {
+		List<PlatformWithPriceDTO> res = new ArrayList<>();
+		String logo;
+		String name;
+		String cost;
+		Platform platform;
+		Price price;
+		List<WebElement> prices;
+		if (!webElements.isEmpty()) {
+			prices = webElements.get(0).findElements(By.className("price-comparison__grid__row__element__icon"));
+			for (WebElement priceElement : prices) {
+				logo = priceElement.findElement(By.tagName("img")).getAttribute("src");
+				name = priceElement.findElement(By.tagName("img")).getAttribute("alt");
+				cost = priceElement.findElement(By.className("price-comparison__grid__row__price")).getText();
+				platform = platformService.getOrCreateByName(name, logo);
+				price = new Price(cost, priceType, mediaContent, platform);
+				priceService.save(price);
+				res.add(new PlatformWithPriceDTO(name, logo, cost));
+			}
 		}
 		return res;
 	}

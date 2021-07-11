@@ -1,6 +1,7 @@
 package com.davcamalv.filmApp.domain;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
@@ -8,6 +9,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.OnDelete;
@@ -15,6 +17,8 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import com.davcamalv.filmApp.enums.PriceType;
 
+@Entity
+@Table(name = "price")
 public class Price {
 	
 	@Id
@@ -24,7 +28,7 @@ public class Price {
 	
 	@NotNull
 	@Column(name = "cost")
-	private Double cost;
+	private String cost;
 	
     @NotNull
     @Column(name = "price_type")
@@ -41,7 +45,7 @@ public class Price {
 	@JoinColumn(name = "platform_id", nullable = false)
 	private Platform platform;
 
-	public Price(@NotNull Double cost, @NotNull PriceType priceType, MediaContent mediaContent, Platform platform) {
+	public Price(@NotNull String cost, @NotNull PriceType priceType, MediaContent mediaContent, Platform platform) {
 		super();
 		this.cost = cost;
 		this.priceType = priceType;
@@ -61,11 +65,11 @@ public class Price {
 		this.id = id;
 	}
 
-	public Double getCost() {
+	public String getCost() {
 		return cost;
 	}
 
-	public void setCost(Double cost) {
+	public void setCost(String cost) {
 		this.cost = cost;
 	}
 
