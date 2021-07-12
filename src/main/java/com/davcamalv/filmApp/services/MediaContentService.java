@@ -25,16 +25,20 @@ public class MediaContentService {
 		return mediaContentRepository.save(mediaContent);
 	}
 	
-	public MediaContent getOrCreateByJustWatchUrl(String justWatchUrl, String title, String poster) {
+	public MediaContent getOrCreateByJustWatchUrl(String justWatchUrl, String title, String poster, String creationDate) {
 		MediaContent res;
-		Optional<MediaContent> mediaContentBD = mediaContentRepository.findByJustWatchUrl(justWatchUrl);
+		Optional<MediaContent> mediaContentBD = getByJustWatchUrl(justWatchUrl);
 		if(mediaContentBD.isPresent()) {
 			res = mediaContentBD.get();
 		}else {
 			MediaType mediaType = getMediaTypeByUrl(justWatchUrl);
-			res = mediaContentRepository.save(new MediaContent(title, null, mediaType, null, justWatchUrl, null, poster, null, null));
+			res = mediaContentRepository.save(new MediaContent(title, null, mediaType, creationDate, justWatchUrl, null, poster, null, null));
 		}
 		return res;
+	}
+	
+	public Optional<MediaContent> getByJustWatchUrl(String justWatchUrl) {
+		return mediaContentRepository.findByJustWatchUrl(justWatchUrl);
 	}
 	
 	private MediaType getMediaTypeByUrl(String url) {

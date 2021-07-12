@@ -1,5 +1,7 @@
 package com.davcamalv.filmApp.controllers;
 
+import java.util.List;
+
 import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -13,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.davcamalv.filmApp.domain.User;
 import com.davcamalv.filmApp.dtos.MessageDTO;
+import com.davcamalv.filmApp.dtos.SearchDTO;
+import com.davcamalv.filmApp.services.JustWatchService;
 import com.davcamalv.filmApp.services.UserService;
 import com.davcamalv.filmApp.services.WatsonService;
 
@@ -29,6 +33,9 @@ public class ConversationController{
 	@Autowired
 	private UserService userService;
 	
+	@Autowired
+	private JustWatchService justWatchService;
+	
 	@PostMapping("/sendMessage")
 	public MessageDTO list(@RequestBody MessageDTO message){
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -36,5 +43,14 @@ public class ConversationController{
 		User user = userService.getByUsername(userDetails.getUsername()).get();
 		log.info("POST /api/session/sendMessage");
 		return watsonService.sendMessage(user.getId(), message);
+	}
+	
+	@PostMapping("/prueba")
+	public List<SearchDTO> prueba(@RequestBody MessageDTO message){
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+		User user = userService.getByUsername(userDetails.getUsername()).get();
+		log.info("POST /api/session/sendMessage");
+		return justWatchService.getSearches(message.getMessage());
 	}
 }

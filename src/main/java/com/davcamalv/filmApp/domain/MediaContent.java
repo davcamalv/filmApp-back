@@ -1,6 +1,5 @@
 package com.davcamalv.filmApp.domain;
 
-import java.util.Date;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -15,8 +14,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 
 import com.davcamalv.filmApp.enums.MediaType;
@@ -41,9 +38,8 @@ public class MediaContent {
 	@Enumerated(EnumType.STRING)
 	private MediaType mediaType;
 	
-    @Temporal(TemporalType.DATE)
 	@Column(name = "creation_date")
-	private Date creationDate;
+	private String creationDate;
 	
 	@NotNull
 	@Column(name = "just_watch_url")
@@ -56,14 +52,17 @@ public class MediaContent {
 	private String poster;
 	
 	@Column(name = "score")
-	private Double score;
+	private String score;
 	
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "media_content_platform", joinColumns = @JoinColumn(name = "media_content_id"), inverseJoinColumns = @JoinColumn(name = "platform_id"))
 	private List<Platform> platforms;
+	
+	@Column(name = "search_performed")
+	private boolean searchPerformed;
 
-	public MediaContent(String title, String description, MediaType mediaType, Date creationDate, String justWatchUrl,
-			String imdbId, String poster, Double score, List<Platform> platforms) {
+	public MediaContent(String title, String description, MediaType mediaType, String creationDate, String justWatchUrl,
+			String imdbId, String poster, String score, List<Platform> platforms) {
 		super();
 		this.title = title;
 		this.description = description;
@@ -112,11 +111,11 @@ public class MediaContent {
 		this.mediaType = mediaType;
 	}
 
-	public Date getCreationDate() {
+	public String getCreationDate() {
 		return creationDate;
 	}
 
-	public void setCreationDate(Date creationDate) {
+	public void setCreationDate(String creationDate) {
 		this.creationDate = creationDate;
 	}
 
@@ -144,11 +143,11 @@ public class MediaContent {
 		this.poster = poster;
 	}
 
-	public Double getScore() {
+	public String getScore() {
 		return score;
 	}
 
-	public void setScore(Double score) {
+	public void setScore(String score) {
 		this.score = score;
 	}
 
@@ -158,6 +157,14 @@ public class MediaContent {
 
 	public void setPlatforms(List<Platform> platforms) {
 		this.platforms = platforms;
+	}
+
+	public boolean getSearchPerformed() {
+		return searchPerformed;
+	}
+
+	public void setSearchPerformed(boolean searchPerformed) {
+		this.searchPerformed = searchPerformed;
 	}
 	
 }
