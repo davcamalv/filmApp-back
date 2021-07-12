@@ -38,10 +38,12 @@ import com.ibm.watson.assistant.v2.model.RuntimeResponseGeneric;
 @Service
 public class MessageService {
 
-	private static final String START_P_TAG = "<p style='margin: 0 0 0; float: left;'>";
-	private static final String END_P_TAG = "</p>";
-	private static final String START_HR_TAG = "<tr>";
-	private static final String END_HR_TAG = "</tr>";
+	private static final String STYLE = "style";
+	private static final String BOLD_STYLE = "font-weight: bold; margin:auto; float: left;";
+	private static final String MARGIN_ZERO = "margin: 0 0 0;";
+	private static final String FLOAT_LEFT_100_STYLE = "width: 100%;float: left;";
+	private static final String ROTATE_TEXT_STYLE = "writing-mode: vertical-lr;transform: rotate(180deg);";
+	private static final String PX_SOLID_BORDER = "border: 1px solid;";
 	private static final String USER_INPUT = "userInput";
 	@Autowired
 	private MessageRepository messageRepository;
@@ -90,6 +92,7 @@ public class MessageService {
 
 	private MessageDTO processBasicResponse(MessageResponse response) {
 		MessageDTO res;
+		Map<String, String> htmlAttributes = new HashMap<>();
 		RuntimeResponseGeneric output = response.getOutput().getGeneric().get(0);
 		switch (output.responseType()) {
 		case "image":
@@ -104,7 +107,9 @@ public class MessageService {
 			break;
 		default:
 			String text = Utils.makeSafeMessage(output.text());
-			res = new MessageDTO(createTextMessage(text), SenderType.server.name(), false, null);
+			htmlAttributes.put(STYLE, MARGIN_ZERO);
+			String html = Utils.createHtmlTag("p", text, htmlAttributes);
+			res = new MessageDTO(html, SenderType.server.name(), false, null);
 			break;
 		}
 		return res;
@@ -119,9 +124,11 @@ public class MessageService {
 			Method method = getClass().getDeclaredMethod(methodName, Map.class);
 			res = (MessageDTO) method.invoke(this, parameters);
 		} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-			res = new MessageDTO(
-					"<p style='margin: 0 0 0'>Disculpe, actualmente no tengo implementada esa funcionalidad</p>",
-					SenderType.server.name(), false, null);
+			Map<String, String> htmlAttributes = new HashMap<>();
+			htmlAttributes.put(STYLE, MARGIN_ZERO);
+			String html = Utils.createHtmlTag("p", "Disculpe, actualmente no tengo implementada esa funcionalidad",
+					htmlAttributes);
+			res = new MessageDTO(html, SenderType.server.name(), false, null);
 		}
 		return res;
 	}
@@ -172,62 +179,109 @@ public class MessageService {
 
 	private MessageDTO createMediaContentMessage(MediaContentDTO mediaContentDTO) {
 		String message = createImageMessage(mediaContentDTO.getPoster()) + "<br><br>";
-		message = message + createBoldTitleMessage(mediaContentDTO.getTitle(), "h2") + "<br>";
-		message = message + createTextMessage(mediaContentDTO.getDescription()) + "<br>";
-		message = message + "<div>" + createBoldTitleMessage("Año: ", "p") + createTextMessage(" " + mediaContentDTO.getCreationDate()) + "</div>" + "<br>";
-		if (mediaContentDTO.getScore() != null) {
-			message = message + "<div>" + createBoldTitleMessage("Puntuación: ", "p") + createTextMessage(" " + mediaContentDTO.getScore().trim())
-			+ "</div>" + "<br>";
+		HashMap<String, String> htmlAttributes = new HashMap<>();
+		htmlAttributes.put(STYLE, BOLD_STYLE + "width: 100%;");
+		message = message + Utils.createHtmlTag("h2", mediaContentDTO.getTitle(), htmlAttributes);
+		message = message + Utils.createHtmlTag("p", mediaContentDTO.getDescription(), new HashMap<>());
+		
+		htmlAttributes.put(STYLE, BOLD_STYLE);
+
+		String yearTitle = Utils.createHtmlTag("p", "Año:&nbsp;", htmlAttributes);
+		String yearValue = Utils.createHtmlTag("p", mediaContentDTO.getCreationDate(), new HashMap<>());
+
+		String typeTitle = Utils.createHtmlTag("p", "Tipo de contenido:&nbsp;", htmlAttributes);
+		String typeValue = Utils.createHtmlTag("p",
+				mediaContentDTO.getMediaType().equals(MediaType.MOVIE.name()) ? "Película" : "Serie", new HashMap<>());
+
+		htmlAttributes.put(STYLE, FLOAT_LEFT_100_STYLE);
+
+		message = message + Utils.createHtmlTag("div", "<br>" + yearTitle + yearValue, htmlAttributes);
+		if (mediaContentDTO.getScore() != null && !mediaContentDTO.getScore().trim().equals("")) {
+			htmlAttributes.put(STYLE, BOLD_STYLE);
+			String scoreTitle = Utils.createHtmlTag("p", "Puntuación:&nbsp;", htmlAttributes);
+			String scoreValue = Utils.createHtmlTag("p", mediaContentDTO.getScore().trim(), new HashMap<>());
+			htmlAttributes.put(STYLE, FLOAT_LEFT_100_STYLE);
+			message = message + Utils.createHtmlTag("div", scoreTitle + scoreValue, htmlAttributes);
 		}
-		message = message + "<div>" + createBoldTitleMessage("Tipo de contenido: ", "p")
-				+ createTextMessage(mediaContentDTO.getMediaType().equals(MediaType.MOVIE.name()) ? " Película" : " Serie")
-				+ "</div>" + "<br>";
+		message = message + Utils.createHtmlTag("div", typeTitle + typeValue, htmlAttributes);
 		message = message + createPricesMessage(mediaContentDTO);
 		return new MessageDTO(message, SenderType.server.name(), false, null);
 	}
 
 	private String createPricesMessage(MediaContentDTO mediaContentDTO) {
-		String res = createBoldTitleMessage("Precios:", "h3") + "<br><br>"; 
-		res = res + "<table style='width: 80%; margin: auto; border: 1px solid; border-collapse: collapse;'>";
-		res = res + START_HR_TAG;
-		res = res + "<th style='border: 1px solid;'><p style='writing-mode: vertical-lr;transform: rotate(180deg);'>Stream</p></th>";
-		res = res + "<td style='border: 1px solid;'>";
+		HashMap<String, String> htmlAttributes = new HashMap<>();
+		htmlAttributes.put(STYLE, BOLD_STYLE);
+
+		String priceTitle = Utils.createHtmlTag("h3", "Precios:", htmlAttributes);
+
+		htmlAttributes.put(STYLE, FLOAT_LEFT_100_STYLE);
+
+		String res = Utils.createHtmlTag("div", "<br>" + priceTitle, htmlAttributes);
+		String tableContent = "";
+		htmlAttributes.put(STYLE, ROTATE_TEXT_STYLE);
+		String pStream = Utils.createHtmlTag("p", "Stream", htmlAttributes);
+		htmlAttributes.put(STYLE, PX_SOLID_BORDER);
+		String thStream = Utils.createHtmlTag("th", pStream, htmlAttributes);
+		String tdStreamContent = "";
 		for (PlatformWithPriceDTO price : mediaContentDTO.getStream()) {
-			res = res + getPricesTd(price);
+			tdStreamContent = tdStreamContent + getPricesTd(price);
 		}
-		res = res + "</td>";
-		res = res + END_HR_TAG;
+		String tdStream = Utils.createHtmlTag("td", tdStreamContent, htmlAttributes);
+		htmlAttributes.clear();
+		tableContent = tableContent + Utils.createHtmlTag("tr", thStream + tdStream, htmlAttributes);
 
-		res = res + START_HR_TAG;
-		res = res + "<th style='border: 1px solid;'><p style='writing-mode: vertical-lr;transform: rotate(180deg);'>Alquilar</p></th>";
-		res = res + "<td style='border: 1px solid;'>";
-
+		htmlAttributes.put(STYLE, ROTATE_TEXT_STYLE);
+		String pRent = Utils.createHtmlTag("p", "Alquilar", htmlAttributes);
+		htmlAttributes.put(STYLE, PX_SOLID_BORDER);
+		String thRent = Utils.createHtmlTag("th", pRent, htmlAttributes);
+		String tdRentContent = "";
 		for (PlatformWithPriceDTO price : mediaContentDTO.getRent()) {
-			res = res + getPricesTd(price);
+			tdRentContent = tdRentContent + getPricesTd(price);
 		}
-		res = res + "</td>";
-		res = res + END_HR_TAG;
+		String tdRent = Utils.createHtmlTag("td", tdRentContent, htmlAttributes);
+		htmlAttributes.clear();
+		tableContent = tableContent + Utils.createHtmlTag("tr", thRent + tdRent, htmlAttributes);
 
-		res = res + START_HR_TAG;
-		res = res + "<th style='border: 1px solid;'><p style='writing-mode: vertical-lr;transform: rotate(180deg);'>Comprar</p></th>";
-		res = res + "<td style='border: 1px solid;'>";
+		htmlAttributes.put(STYLE, ROTATE_TEXT_STYLE);
+		String pBuy = Utils.createHtmlTag("p", "Comprar", htmlAttributes);
+		htmlAttributes.put(STYLE, PX_SOLID_BORDER);
+		String thBuy = Utils.createHtmlTag("th", pBuy, htmlAttributes);
+		String tdBuyContent = "";
 		for (PlatformWithPriceDTO price : mediaContentDTO.getBuy()) {
-			res = res + getPricesTd(price);
+			tdBuyContent = tdBuyContent + getPricesTd(price);
 		}
-		res = res + "</td>";
-		res = res + END_HR_TAG;
-		res = res + "</table>";
+		String tdBuy = Utils.createHtmlTag("td", tdBuyContent, htmlAttributes);
+		htmlAttributes.clear();
+		tableContent = tableContent + Utils.createHtmlTag("tr", thBuy + tdBuy, htmlAttributes);
+
+		htmlAttributes.clear();
+		htmlAttributes.put(STYLE, "width: 80%; margin: auto; border: 1px solid; border-collapse: collapse;");
+		res = res + Utils.createHtmlTag("table", tableContent, htmlAttributes);
 		return res;
 	}
 
-	private String getPricesTd(PlatformWithPriceDTO streamPrice) {
-		return "<div style='float: left;'><img style='border-radius: 5px;' alt='" + streamPrice.getName() + "' src='"
-				+ streamPrice.getLogo() + "'/><center><p>" + streamPrice.getCost()
-				+ "</p></center></div>";
+	private String getPricesTd(PlatformWithPriceDTO price) {
+		Map<String, String> htmlAttributes = new HashMap<>();
+		String cost = Utils.createHtmlTag("p", price.getCost(), htmlAttributes);
+		String center = Utils.createHtmlTag("center", cost, htmlAttributes);
+		htmlAttributes.put("src", price.getLogo());
+		htmlAttributes.put("alt", price.getName());
+		htmlAttributes.put(STYLE, "border-radius: 5px; margin-top: 12px; margin-left: 12px;price.getLogo()");
+		String img = Utils.createHtmlTag("img", "", htmlAttributes);
+		htmlAttributes.clear();
+		htmlAttributes.put("title", price.getName());
+		htmlAttributes.put("href", price.getUrl());
+		htmlAttributes.put("target", "_blank");
+		String a = Utils.createHtmlTag("a", img, htmlAttributes);
+		htmlAttributes.clear();
+		htmlAttributes.put(STYLE, "float: left;");
+		return Utils.createHtmlTag("div", a + center, htmlAttributes);
 	}
-	
+
 	private MessageDTO getPremiereMessage(List<Premiere> premieres) {
-		String message = createTextMessage("Los estrenos son:") + "<br>";
+		Map<String, String> htmlAttributes = new HashMap<>();
+		String mediaContentInformation;
+		String message = Utils.createHtmlTag("p", "Los estrenos son:", new HashMap<>()) + "<br>";
 		String type;
 		Map<String, List<Premiere>> premieresByPlatform = new HashMap<>();
 		premieres.stream().forEach(x -> {
@@ -240,34 +294,40 @@ public class MessageService {
 			premieresByPlatform.put(platformName, premieresOnMap);
 		});
 		for (Entry<String, List<Premiere>> platform : premieresByPlatform.entrySet()) {
-			message = message + "<p style='margin: 0 0 0; font-weight: bold;'>" + platform.getKey() + ":</p><br>";
+			htmlAttributes.clear();
+			htmlAttributes.put(STYLE, "margin: 0 0 0; font-weight: bold;");
+			message = message + Utils.createHtmlTag("p", platform.getKey() + ":", htmlAttributes) + "<br>";
 			for (Premiere premiere : platform.getValue()) {
+				htmlAttributes.clear();
+				htmlAttributes.put(STYLE, "margin: 0 0 0; font-style: italic; text-indent: 20px;");
 				type = "Película";
-				message = message + "<p style='margin: 0 0 0; font-style: italic; text-indent: 20px;'>" + "- "
-						+ premiere.getMediaContent().getTitle();
+				mediaContentInformation = "";
+
+				mediaContentInformation = mediaContentInformation + "-&nbsp;" + premiere.getMediaContent().getTitle();
+
 				if ("SERIE".equals(premiere.getMediaContent().getMediaType().name())) {
 					type = "Serie";
-					message = message + " (" + premiere.getNews() + ", " + premiere.getSeason() + ")";
+					mediaContentInformation = mediaContentInformation + " (" + premiere.getNews() + ", "
+							+ premiere.getSeason() + ")";
 				}
-				message = message + " (" + type + ", "
-						+ new SimpleDateFormat("dd/MM/yyyy").format(premiere.getPremiereDate()) + ")" + "</p><br>";
-				message = message + "<img style='display:block; margin:auto; width: 60%; border-radius: 5px' src="
-						+ premiere.getMediaContent().getPoster() + " ><br><br>";
+				mediaContentInformation = mediaContentInformation + " (" + type + ", "
+						+ new SimpleDateFormat("dd/MM/yyyy").format(premiere.getPremiereDate()) + ")";
+				message = message + Utils.createHtmlTag("p", mediaContentInformation, htmlAttributes) + "<br>";
+
+				htmlAttributes.clear();
+				htmlAttributes.put(STYLE, "display:block; margin:auto; width: 60%; border-radius: 5px");
+				htmlAttributes.put("src", premiere.getMediaContent().getPoster());
+				message = message + Utils.createHtmlTag("img", "", htmlAttributes) + "<br><br>";
 			}
 		}
 		return new MessageDTO(message, SenderType.server.name(), false, null);
 	}
 
 	private String createImageMessage(String source) {
-		return "<img style='display:block; margin:auto; width: 80%; border-radius: 5px' src=" + source + " >";
-	}
-
-	private String createTextMessage(String text) {
-		return START_P_TAG + text + END_P_TAG;
-	}
-
-	private String createBoldTitleMessage(String text, String size) {
-		return "<" + size + " style='font-weight: bold; margin:auto; float: left;'>" + text + "</" + size + ">";
+		Map<String, String> htmlAttributes = new HashMap<>();
+		htmlAttributes.put("src", source);
+		htmlAttributes.put(STYLE, "display:block; margin:auto; width: 80%; border-radius: 5px;");
+		return Utils.createHtmlTag("img", "", htmlAttributes);
 	}
 
 	private MessageDTO createWatsonOptionMessage(String title, String description,
@@ -281,16 +341,22 @@ public class MessageService {
 	}
 
 	private MessageDTO createOptionMessage(String title, String description, List<Option> options) {
+		Map<String, String> htmlAttributes = new HashMap<>();
+		htmlAttributes.put(STYLE, MARGIN_ZERO);
 		Selectable selectable = new Selectable(title, description, options);
 		selectable = selectableService.save(selectable);
 		List<OptionDTO> optionsDTO = options.stream().map(x -> new OptionDTO(x.getLabel(), x.getText()))
 				.collect(Collectors.toList());
 		SelectableDTO selectableDTO = new SelectableDTO(selectable.getId(), optionsDTO);
-		return new MessageDTO(START_P_TAG + title + description + "</p>", SenderType.server.name(), true,
-				selectableDTO);
+		String html = Utils.createHtmlTag("p", title + description, htmlAttributes);
+
+		return new MessageDTO(html, SenderType.server.name(), true, selectableDTO);
 	}
 
 	private MessageDTO getMessageError(String text) {
-		return new MessageDTO(START_P_TAG + text + END_P_TAG, SenderType.server.name(), false, null);
+		Map<String, String> htmlAttributes = new HashMap<>();
+		htmlAttributes.put(STYLE, MARGIN_ZERO);
+		String html = Utils.createHtmlTag("p", text, htmlAttributes);
+		return new MessageDTO(html, SenderType.server.name(), false, null);
 	}
 }

@@ -45,12 +45,17 @@ public class Price {
 	@JoinColumn(name = "platform_id", nullable = false)
 	private Platform platform;
 
-	public Price(@NotNull String cost, @NotNull PriceType priceType, MediaContent mediaContent, Platform platform) {
+	@NotNull
+	@Column(name = "url")
+	private String url;
+	
+	public Price(@NotNull String cost, @NotNull PriceType priceType, MediaContent mediaContent, Platform platform, String url) {
 		super();
 		this.cost = cost;
 		this.priceType = priceType;
 		this.mediaContent = mediaContent;
 		this.platform = platform;
+		this.url = url;
 	}
 
 	public Price() {
@@ -95,6 +100,14 @@ public class Price {
 
 	public void setPlatform(Platform platform) {
 		this.platform = platform;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
 	}
 	
 }

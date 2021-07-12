@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.davcamalv.filmApp.domain.MediaContent;
-import com.davcamalv.filmApp.domain.Platform;
 import com.davcamalv.filmApp.domain.Price;
 import com.davcamalv.filmApp.dtos.PlatformWithPriceDTO;
 import com.davcamalv.filmApp.enums.PriceType;
@@ -29,8 +28,7 @@ public class PriceService {
 			PriceType priceType) {
 		List<PlatformWithPriceDTO> res;
 		List<Price> prices = priceRepository.findByMediaContentAndPriceType(mediaContent, priceType);
-		res = prices.stream().map(x -> new PlatformWithPriceDTO(x.getPlatform().getName(), x.getPlatform().getLogo(),
-				String.valueOf(x.getCost()) + "€")).collect(Collectors.toList());
+		res = prices.stream().map(x -> new PlatformWithPriceDTO(x.getPlatform().getName(), x.getPlatform().getLogo(),x.getCost(), x.getUrl())).collect(Collectors.toList());
 		return res;
 	}
 

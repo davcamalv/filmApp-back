@@ -15,8 +15,6 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +29,7 @@ import com.davcamalv.filmApp.dtos.MediaContentDTO;
 import com.davcamalv.filmApp.dtos.PlatformWithPriceDTO;
 import com.davcamalv.filmApp.dtos.SearchDTO;
 import com.davcamalv.filmApp.enums.PriceType;
+import com.davcamalv.filmApp.utils.Utils;
 
 @Service
 @Transactional
@@ -52,10 +51,7 @@ public class JustWatchService {
 
 	@Scheduled(cron = "0 0 3 * * ?", zone = "Europe/Paris")
 	protected void scrapePremieres() {
-		ChromeOptions options = new ChromeOptions();
-		options.setHeadless(true);
-		options.addArguments("window-size=1920,1080");
-		WebDriver webDriver = new ChromeDriver(options);
+		WebDriver webDriver = Utils.createWebDriver();
 		JavascriptExecutor js = (JavascriptExecutor) webDriver;
 		try {
 			WebDriverWait wait = new WebDriverWait(webDriver, 15);
@@ -129,10 +125,7 @@ public class JustWatchService {
 
 	public List<SearchDTO> getSearches(String title) {
 		List<SearchDTO> res = new ArrayList<>();
-		ChromeOptions options = new ChromeOptions();
-		options.setHeadless(true);
-		options.addArguments("window-size=1920,1080");
-		WebDriver webDriver = new ChromeDriver(options);
+		WebDriver webDriver = Utils.createWebDriver();
 		JavascriptExecutor js = (JavascriptExecutor) webDriver;
 		String justWatchUrl;
 		String year;
@@ -192,10 +185,7 @@ public class JustWatchService {
 		String score = null;
 		String imdbId = null;
 
-		ChromeOptions options = new ChromeOptions();
-		options.setHeadless(true);
-		options.addArguments("window-size=1920,1080");
-		WebDriver webDriver = new ChromeDriver(options);
+		WebDriver webDriver = Utils.createWebDriver();
 		try {
 			WebDriverWait wait = new WebDriverWait(webDriver, 15);
 			webDriver.get(url);
@@ -235,6 +225,7 @@ public class JustWatchService {
 	private List<PlatformWithPriceDTO> scrapePrices(List<WebElement> webElements, MediaContent mediaContent,
 			PriceType priceType) {
 		List<PlatformWithPriceDTO> res = new ArrayList<>();
+		String url;
 		String logo;
 		String name;
 		String cost;
@@ -244,15 +235,17 @@ public class JustWatchService {
 		if (!webElements.isEmpty()) {
 			prices = webElements.get(0).findElements(By.className("price-comparison__grid__row__element__icon"));
 			for (WebElement priceElement : prices) {
+				url = priceElement.findElement(By.tagName("a")).getAttribute("href");
 				logo = priceElement.findElement(By.tagName("img")).getAttribute("src");
 				name = priceElement.findElement(By.tagName("img")).getAttribute("alt");
 				cost = priceElement.findElement(By.className("price-comparison__grid__row__price")).getText();
 				platform = platformService.getOrCreateByName(name, logo);
-				price = new Price(cost, priceType, mediaContent, platform);
+				price = new Price(cost, priceType, mediaContent, platform, url);
 				priceService.save(price);
-				res.add(new PlatformWithPriceDTO(name, logo, cost));
+				res.add(new PlatformWithPriceDTO(name, logo, cost, url));
 			}
 		}
 		return res;
 	}
+	
 }
