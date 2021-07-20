@@ -106,6 +106,9 @@ public class JustWatchService {
 			if (!imgs.isEmpty()) {
 				title = imgs.get(0).getAttribute("alt");
 				poster = imgs.get(0).getAttribute("src").replace("s166", "s718");
+				if(poster.contains("data:image")) {
+					poster = imgs.get(0).getAttribute("data-src").replace("s166", "s718");
+				}
 			} else {
 				title = mediaContentElement.findElement(By.className("title-poster--no-poster")).getText();
 				poster = null;
@@ -148,6 +151,9 @@ public class JustWatchService {
 				List<WebElement> imgs = search.findElements(By.tagName("img"));
 				if (!imgs.isEmpty()) {
 					poster = imgs.get(0).getAttribute("src").replace("s166", "s718");
+					if(poster.contains("data:image")) {
+						poster = imgs.get(0).getAttribute("data-src").replace("s166", "s718");
+					}
 				} else {
 					poster = null;
 				}
