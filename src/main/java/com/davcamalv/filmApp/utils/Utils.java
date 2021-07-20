@@ -27,6 +27,7 @@ public class Utils {
 		ChromeOptions options = new ChromeOptions();
 		options.setHeadless(true);
 		options.addArguments("window-size=1920,1080");
+		options.addArguments("--no-sandbox");
 		WebDriver webDriver = new ChromeDriver(options);
 		return webDriver;
 	}
