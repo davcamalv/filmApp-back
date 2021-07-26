@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.davcamalv.filmApp.domain.Function;
 import com.davcamalv.filmApp.domain.Message;
 import com.davcamalv.filmApp.domain.Option;
 import com.davcamalv.filmApp.domain.Platform;
@@ -51,6 +52,9 @@ public class MessageService {
 
 	@Autowired
 	private SelectableService selectableService;
+	
+	@Autowired
+	private FunctionService functionService;
 
 	@Autowired
 	private UserService userService;
@@ -177,6 +181,19 @@ public class MessageService {
 					.collect(Collectors.toList());
 		}
 		return createOptionMessage("¿A cuál de los siguientes resultados se refiere?", "", options);
+	}
+
+	protected MessageDTO getFunctions(Map<String, Object> params) {
+		String text = "Las funciones que tengo implementadas actualmente son las siguientes:" + Constants.BR;
+		List<Option> options = new ArrayList<>();
+		List<Function> functions = functionService.findAll();
+		for (Function function : functions) {
+			text = text + Constants.BR + function.getDescription();
+			options.add(new Option(function.getButton_label(), function.getButton_value()));
+		}
+		options.add(new Option("No quiero realizar ninguna acción actualmente", "No quiero realizar ninguna acción actualmente"));
+		text = text + Constants.BR + Constants.BR + "¿Desea realizar alguna de estas acciones?";
+		return createOptionMessage(text, "", options);
 	}
 
 	protected MessageDTO getMediaContent(Map<String, Object> params) {
