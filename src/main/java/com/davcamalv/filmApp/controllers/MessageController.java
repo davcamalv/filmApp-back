@@ -15,42 +15,30 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.davcamalv.filmApp.domain.User;
 import com.davcamalv.filmApp.dtos.MessageDTO;
-import com.davcamalv.filmApp.dtos.SearchDTO;
-import com.davcamalv.filmApp.services.JustWatchService;
+import com.davcamalv.filmApp.dtos.PaginationDTO;
+import com.davcamalv.filmApp.services.MessageService;
 import com.davcamalv.filmApp.services.UserService;
-import com.davcamalv.filmApp.services.WatsonService;
 
 @RestController
-@RequestMapping("/api/conversation")
+@RequestMapping("/api/message")
 @CrossOrigin
-public class ConversationController{
+public class MessageController{
 
-	protected final Logger log = Logger.getLogger(ConversationController.class);
-	
-	@Autowired
-	private WatsonService watsonService;
+	protected final Logger log = Logger.getLogger(MessageController.class);
 	
 	@Autowired
 	private UserService userService;
 	
 	@Autowired
-	private JustWatchService justWatchService;
+	private MessageService messageService;
 	
-	@PostMapping("/sendMessage")
-	public MessageDTO list(@RequestBody MessageDTO message){
+	@PostMapping("/findByUser")
+	public List<MessageDTO> list(@RequestBody PaginationDTO paginationDTO){
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 		User user = userService.getByUsername(userDetails.getUsername()).get();
-		log.info("POST /api/session/sendMessage");
-		return watsonService.sendMessage(user.getId(), message);
+		log.info("POST /api/message/findByUser");
+		return messageService.findMessagesByUser(paginationDTO.getPageNumber(), paginationDTO.getPageSize(), user);
 	}
-	
-	@PostMapping("/prueba")
-	public List<SearchDTO> prueba(@RequestBody MessageDTO message){
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-		User user = userService.getByUsername(userDetails.getUsername()).get();
-		log.info("POST /api/session/sendMessage");
-		return justWatchService.getSearches(message.getMessage());
-	}
+
 }
