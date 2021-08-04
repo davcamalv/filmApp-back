@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.transaction.Transactional;
@@ -125,6 +126,77 @@ public class JustWatchService {
 			premiereService.save(new Premiere(new Date(), season, news, mediaContent, platform));
 		}
 	}
+	
+	public List<SearchDTO> getFilteredSearches(Map<String, String> parameters) {  
+		String typeFilter = "";
+		String type = "";
+		if(parameters.get("tipo") != null && !"".equals(parameters.get("tipo"))) {
+			type = "Película".equals(parameters.get("tipo"))?"peliculas":"series";
+			typeFilter = "/" + type;
+		}
+		
+		String platformFilter = "";
+		if(parameters.get("plataforma") != null && !"".equals(parameters.get("plataforma"))) {
+			platformFilter = "providers=" + platformService.getByName(parameters.get("plataforma")).get().getShortName() + "&";
+		}
+		
+		String ageFilter = "";
+		if(parameters.get("clasificacion_edad") != null && !"".equals(parameters.get("clasificacion_edad")) && !"series".equals(type)) {
+			ageFilter = "age_certifications=" + parameters.get("clasificacion_edad") + "&";
+		}
+		
+		String genreFilter = "";
+		if(parameters.get("genero") != null && !"".equals(parameters.get("genero"))) {
+			genreFilter = "genres=" + genreService.getByName(parameters.get("genero")).get().getShortName() + "&";
+		}
+		String yearFrom = "1900";
+		if(parameters.get("fecha_inicial") != null && !"".equals(parameters.get("fecha_inicial"))) {
+			yearFrom = parameters.get("fecha_inicial");
+		}
+		String yearUntil = "3000";
+		if(parameters.get("fecha_final") != null && !"".equals(parameters.get("fecha_final"))) {
+			yearUntil = parameters.get("fecha_final");
+		}
+		
+		String yearFilter = "&release_year_from=" + yearFrom + "&release_year_until=" + yearUntil;
+		
+		String url = "https://www.justwatch.com/es" + typeFilter + platformFilter + ageFilter + genreFilter + yearFilter + "&sort_by=imdb_score";
+		
+		List<SearchDTO> res = new ArrayList<>();
+		WebDriver webDriver = Utils.createWebDriver();
+		String justWatchUrl;
+		String year;
+		String searchTitle;
+		String poster;
+		
+		try {
+			WebDriverWait wait = new WebDriverWait(webDriver, 15);
+			webDriver.get(url);
+			wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("title-list")));
+			List<WebElement> searches = webDriver.findElements(By.className("title-list-grid__item"));
+			for (WebElement search : searches) {
+				justWatchUrl = search.findElement(By.tagName("a")).getAttribute("href");
+				searchTitle = search.findElement(By.tagName("a")).findElement(By.tagName("div")).findElement(By.tagName("picture")).findElement(By.tagName("img")).getAttribute("alt");
+				year = search.findElement(By.className("title-list-row__row--muted")).getText();
+				res.add(new SearchDTO(justWatchUrl, searchTitle, year));
+				List<WebElement> imgs = search.findElements(By.tagName("img"));
+				if (!imgs.isEmpty()) {
+					poster = imgs.get(0).getAttribute("src").replace("s166", "s718");
+					if(poster.contains("data:image")) {
+						poster = imgs.get(0).getAttribute("data-src").replace("s166", "s718");
+					}
+				} else {
+					poster = null;
+				}
+				mediaContentService.getOrCreateByJustWatchUrl(justWatchUrl, searchTitle, poster, year);
+			}
+		} catch (Exception e) {
+			log.error("Error getting the searches", e);
+		} finally {
+			webDriver.close();
+		}
+		return res;
+	};
 
 	public List<SearchDTO> getSearches(String title) {
 		List<SearchDTO> res = new ArrayList<>();
@@ -227,6 +299,7 @@ public class JustWatchService {
 		}
 		return res;
 	}
+	
 
 	private List<PlatformWithPriceDTO> scrapePrices(List<WebElement> webElements, MediaContent mediaContent,
 			PriceType priceType) {

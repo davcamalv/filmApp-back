@@ -23,11 +23,15 @@ public class Platform {
 	
 	@Column(name = "logo")
 	private String logo;
+	
+	@Column(name = "short_name")
+	private String shortName;
 
-	public Platform(@NotNull String name, String logo) {
+	public Platform(@NotNull String name, String logo, String shortName) {
 		super();
 		this.name = name;
 		this.logo = logo;
+		this.shortName = shortName;
 	}
 
 	public Platform() {
@@ -56,6 +60,14 @@ public class Platform {
 
 	public void setLogo(String logo) {
 		this.logo = logo;
+	}
+
+	public String getShortName() {
+		return shortName;
+	}
+
+	public void setShortName(String shortName) {
+		this.shortName = shortName;
 	}
 	
 }

@@ -26,7 +26,7 @@ public class PlatformService {
 		if(platformBD.isPresent()) {
 			res = platformBD.get();
 		}else {
-			res = platformRepository.save(new Platform(name, logo));
+			res = platformRepository.save(new Platform(name, logo, null));
 		}
 		return res;
 	}
