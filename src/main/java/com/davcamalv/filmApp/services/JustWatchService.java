@@ -30,6 +30,7 @@ import com.davcamalv.filmApp.dtos.MediaContentDTO;
 import com.davcamalv.filmApp.dtos.PlatformWithPriceDTO;
 import com.davcamalv.filmApp.dtos.SearchDTO;
 import com.davcamalv.filmApp.enums.PriceType;
+import com.davcamalv.filmApp.utils.Constants;
 import com.davcamalv.filmApp.utils.Utils;
 
 @Service
@@ -40,6 +41,9 @@ public class JustWatchService {
 
 	@Autowired
 	private PlatformService platformService;
+
+	@Autowired
+	private GenreService genreService;
 
 	@Autowired
 	private PremiereService premiereService;
@@ -107,8 +111,8 @@ public class JustWatchService {
 			if (!imgs.isEmpty()) {
 				title = imgs.get(0).getAttribute("alt");
 				poster = imgs.get(0).getAttribute("src").replace("s166", "s718");
-				if(poster.contains("data:image")) {
-					poster = imgs.get(0).getAttribute("data-src").replace("s166", "s718");
+				if (poster.contains(Constants.DATA_IMAGE)) {
+					poster = imgs.get(0).getAttribute(Constants.DATA_SRC).replace("s166", "s718");
 				}
 			} else {
 				title = mediaContentElement.findElement(By.className("title-poster--no-poster")).getText();
@@ -126,49 +130,15 @@ public class JustWatchService {
 			premiereService.save(new Premiere(new Date(), season, news, mediaContent, platform));
 		}
 	}
-	
-	public List<SearchDTO> getFilteredSearches(Map<String, String> parameters) {  
-		String typeFilter = "";
-		String type = "";
-		if(parameters.get("tipo") != null && !"".equals(parameters.get("tipo"))) {
-			type = "Película".equals(parameters.get("tipo"))?"peliculas":"series";
-			typeFilter = "/" + type;
-		}
-		
-		String platformFilter = "";
-		if(parameters.get("plataforma") != null && !"".equals(parameters.get("plataforma"))) {
-			platformFilter = "providers=" + platformService.getByName(parameters.get("plataforma")).get().getShortName() + "&";
-		}
-		
-		String ageFilter = "";
-		if(parameters.get("clasificacion_edad") != null && !"".equals(parameters.get("clasificacion_edad")) && !"series".equals(type)) {
-			ageFilter = "age_certifications=" + parameters.get("clasificacion_edad") + "&";
-		}
-		
-		String genreFilter = "";
-		if(parameters.get("genero") != null && !"".equals(parameters.get("genero"))) {
-			genreFilter = "genres=" + genreService.getByName(parameters.get("genero")).get().getShortName() + "&";
-		}
-		String yearFrom = "1900";
-		if(parameters.get("fecha_inicial") != null && !"".equals(parameters.get("fecha_inicial"))) {
-			yearFrom = parameters.get("fecha_inicial");
-		}
-		String yearUntil = "3000";
-		if(parameters.get("fecha_final") != null && !"".equals(parameters.get("fecha_final"))) {
-			yearUntil = parameters.get("fecha_final");
-		}
-		
-		String yearFilter = "&release_year_from=" + yearFrom + "&release_year_until=" + yearUntil;
-		
-		String url = "https://www.justwatch.com/es" + typeFilter + platformFilter + ageFilter + genreFilter + yearFilter + "&sort_by=imdb_score";
-		
+
+	public List<SearchDTO> getFilteredSearches(Map<String, String> parameters) {
+		String url = getURLFilteredSearches(parameters);
 		List<SearchDTO> res = new ArrayList<>();
 		WebDriver webDriver = Utils.createWebDriver();
 		String justWatchUrl;
-		String year;
 		String searchTitle;
 		String poster;
-		
+
 		try {
 			WebDriverWait wait = new WebDriverWait(webDriver, 15);
 			webDriver.get(url);
@@ -176,27 +146,67 @@ public class JustWatchService {
 			List<WebElement> searches = webDriver.findElements(By.className("title-list-grid__item"));
 			for (WebElement search : searches) {
 				justWatchUrl = search.findElement(By.tagName("a")).getAttribute("href");
-				searchTitle = search.findElement(By.tagName("a")).findElement(By.tagName("div")).findElement(By.tagName("picture")).findElement(By.tagName("img")).getAttribute("alt");
-				year = search.findElement(By.className("title-list-row__row--muted")).getText();
-				res.add(new SearchDTO(justWatchUrl, searchTitle, year));
+				searchTitle = search.findElement(By.tagName("a")).findElement(By.tagName("div"))
+						.findElement(By.tagName("picture")).findElement(By.tagName("img")).getAttribute("alt");
 				List<WebElement> imgs = search.findElements(By.tagName("img"));
 				if (!imgs.isEmpty()) {
 					poster = imgs.get(0).getAttribute("src").replace("s166", "s718");
-					if(poster.contains("data:image")) {
-						poster = imgs.get(0).getAttribute("data-src").replace("s166", "s718");
+					if (poster.contains(Constants.DATA_IMAGE)) {
+						poster = imgs.get(0).getAttribute(Constants.DATA_SRC).replace("s166", "s718");
 					}
 				} else {
 					poster = null;
 				}
-				mediaContentService.getOrCreateByJustWatchUrl(justWatchUrl, searchTitle, poster, year);
+				res.add(new SearchDTO(justWatchUrl, searchTitle, null, poster));
+				mediaContentService.getOrCreateByJustWatchUrl(justWatchUrl, searchTitle, poster, null);
 			}
 		} catch (Exception e) {
-			log.error("Error getting the searches", e);
+			log.error("Error getting filtered searches", e);
 		} finally {
 			webDriver.close();
 		}
 		return res;
-	};
+	}
+
+	private String getURLFilteredSearches(Map<String, String> parameters) {
+		String typeFilter = "";
+		String type = "";
+		if (parameters.get("tipo") != null && !"".equals(parameters.get("tipo"))) {
+			type = "Película".equals(parameters.get("tipo")) ? "peliculas" : "series";
+			typeFilter = "/" + type;
+		}
+
+		String platformFilter = "";
+		if (parameters.get(Constants.PLATAFORMA) != null && !"".equals(parameters.get(Constants.PLATAFORMA))) {
+			platformFilter = "providers="
+					+ platformService.getByName(parameters.get(Constants.PLATAFORMA)).get().getShortName() + "&";
+		}
+
+		String ageFilter = "";
+		if (parameters.get(Constants.CLASIFICACION_EDAD) != null
+				&& !"".equals(parameters.get(Constants.CLASIFICACION_EDAD)) && !"series".equals(type)) {
+			ageFilter = "age_certifications=" + parameters.get(Constants.CLASIFICACION_EDAD).split("\\.")[0] + "&";
+		}
+
+		String genreFilter = "";
+		if (parameters.get(Constants.GENERO) != null && !"".equals(parameters.get(Constants.GENERO))) {
+			genreFilter = "genres=" + genreService.getByName(parameters.get(Constants.GENERO)).get().getShortName()
+					+ "&";
+		}
+		String yearFrom = "1900";
+		if (parameters.get(Constants.FECHA_INICIAL) != null && !"".equals(parameters.get(Constants.FECHA_INICIAL))) {
+			yearFrom = parameters.get(Constants.FECHA_INICIAL).split("\\.")[0];
+		}
+		String yearUntil = "3000";
+		if (parameters.get(Constants.FECHA_FINAL) != null && !"".equals(parameters.get(Constants.FECHA_FINAL))) {
+			yearUntil = parameters.get(Constants.FECHA_FINAL).split("\\.")[0];
+		}
+
+		String yearFilter = "release_year_from=" + yearFrom + "&release_year_until=" + yearUntil;
+
+		return "https://www.justwatch.com/es" + typeFilter + "?" + platformFilter + ageFilter + genreFilter + yearFilter
+				+ "&sort_by=imdb_score";
+	}
 
 	public List<SearchDTO> getSearches(String title) {
 		List<SearchDTO> res = new ArrayList<>();
@@ -219,16 +229,16 @@ public class JustWatchService {
 				justWatchUrl = search.findElement(By.tagName("a")).getAttribute("href");
 				searchTitle = search.findElement(By.className("title-list-row__row__title")).getText();
 				year = search.findElement(By.className("title-list-row__row--muted")).getText();
-				res.add(new SearchDTO(justWatchUrl, searchTitle, year));
 				List<WebElement> imgs = search.findElements(By.tagName("img"));
 				if (!imgs.isEmpty()) {
 					poster = imgs.get(0).getAttribute("src").replace("s166", "s718");
-					if(poster.contains("data:image")) {
-						poster = imgs.get(0).getAttribute("data-src").replace("s166", "s718");
+					if (poster.contains(Constants.DATA_IMAGE)) {
+						poster = imgs.get(0).getAttribute(Constants.DATA_SRC).replace("s166", "s718");
 					}
 				} else {
 					poster = null;
 				}
+				res.add(new SearchDTO(justWatchUrl, searchTitle, year, poster));
 				mediaContentService.getOrCreateByJustWatchUrl(justWatchUrl, searchTitle, poster, year);
 			}
 		} catch (Exception e) {
@@ -269,8 +279,8 @@ public class JustWatchService {
 			webDriver.get(url);
 			wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("jw-info-box")));
 			String creationDate = webDriver.findElement(By.className("text-muted")).getText();
-			String description = webDriver.findElement(By.className("text-wrap-pre-line"))
-					.findElement(By.tagName("span")).getText();
+			String description = webDriver.findElement(By.xpath("//p[contains(@class, 'text-wrap-pre-line')]/span"))
+					.getText();
 			List<WebElement> imdb = webDriver.findElements(By.xpath("//*[@v-uib-tooltip='IMDB']"));
 			if (!imdb.isEmpty()) {
 				score = imdb.get(0).findElement(By.tagName("a")).getText();
@@ -283,9 +293,11 @@ public class JustWatchService {
 			mediaContentValue.setImdbId(imdbId);
 			mediaContentValue.setSearchPerformed(true);
 			mediaContentService.save(mediaContentValue);
-			List<WebElement> rents = webDriver.findElements(By.className("price-comparison__grid__row--rent"));
-			List<WebElement> streams = webDriver.findElements(By.className("price-comparison__grid__row--stream"));
-			List<WebElement> buyList = webDriver.findElements(By.className("price-comparison__grid__row--buy"));
+			List<WebElement> monetizations = webDriver.findElements(By.className("monetizations"));
+			WebElement monetization = monetizations.get(monetizations.size() - 1);
+			List<WebElement> rents = monetization.findElements(By.className("price-comparison__grid__row--rent"));
+			List<WebElement> streams = monetization.findElements(By.className("price-comparison__grid__row--stream"));
+			List<WebElement> buyList = monetization.findElements(By.className("price-comparison__grid__row--buy"));
 			List<PlatformWithPriceDTO> rent = scrapePrices(rents, mediaContentValue, PriceType.RENT);
 			List<PlatformWithPriceDTO> stream = scrapePrices(streams, mediaContentValue, PriceType.STREAM);
 			List<PlatformWithPriceDTO> buy = scrapePrices(buyList, mediaContentValue, PriceType.BUY);
@@ -293,13 +305,12 @@ public class JustWatchService {
 					mediaContentValue.getMediaType().name(), mediaContentValue.getCreationDate(),
 					mediaContentValue.getPoster(), mediaContentValue.getScore(), rent, stream, buy);
 		} catch (Exception e) {
-			log.error("Error getting the searches", e);
+			log.error("Error scraping media content", e);
 		} finally {
 			webDriver.close();
 		}
 		return res;
 	}
-	
 
 	private List<PlatformWithPriceDTO> scrapePrices(List<WebElement> webElements, MediaContent mediaContent,
 			PriceType priceType) {
@@ -326,5 +337,5 @@ public class JustWatchService {
 		}
 		return res;
 	}
-	
+
 }

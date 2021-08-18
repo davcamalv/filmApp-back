@@ -7,6 +7,8 @@ public class SearchDTO {
 	private String title;
 	
 	private String year;
+	
+	private String image;
 
 	public String getUrl() {
 		return url;
@@ -32,11 +34,20 @@ public class SearchDTO {
 		this.year = year;
 	}
 
-	public SearchDTO(String url, String title, String year) {
+	public String getImage() {
+		return image;
+	}
+
+	public void setImage(String image) {
+		this.image = image;
+	}
+
+	public SearchDTO(String url, String title, String year, String image) {
 		super();
 		this.url = url;
 		this.title = title;
 		this.year = year;
+		this.image = image;
 	}
 
 	public SearchDTO() {

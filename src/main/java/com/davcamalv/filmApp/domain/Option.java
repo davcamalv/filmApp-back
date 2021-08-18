@@ -23,7 +23,10 @@ public class Option {
 	@NotNull
 	@Column(name = "option_text")
 	private String text;
-
+	
+	@Column(name = "image")
+	private String image;
+	
 	public Long getId() {
 		return id;
 	}
@@ -48,10 +51,19 @@ public class Option {
 		this.text = text;
 	}
 
-	public Option(String label, @NotNull String text) {
+	public String getImage() {
+		return image;
+	}
+
+	public void setImage(String image) {
+		this.image = image;
+	}
+
+	public Option(String label, @NotNull String text, String image) {
 		super();
 		this.label = label;
 		this.text = text;
+		this.image = image;
 	}
 
 	public Option() {

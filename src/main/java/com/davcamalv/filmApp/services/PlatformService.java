@@ -1,5 +1,6 @@
 package com.davcamalv.filmApp.services;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.transaction.Transactional;
@@ -33,5 +34,9 @@ public class PlatformService {
 
 	public Optional<Platform> getByName(String name) {
 		return platformRepository.findByName(name);
+	}
+	
+	public List<Platform> findAll(){
+		return platformRepository.findAll();
 	}
 }

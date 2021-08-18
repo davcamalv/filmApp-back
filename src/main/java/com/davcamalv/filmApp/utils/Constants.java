@@ -46,6 +46,13 @@ public class Constants {
 
 //	Others
 	public static final String BLANK = "_blank";
+	public static final String CLASIFICACION_EDAD = "clasificacion_edad";
+	public static final String DATA_IMAGE = "data:image";
+	public static final String DATA_SRC = "data-src";
+	public static final String FECHA_FINAL = "fecha_final";
+	public static final String FECHA_INICIAL = "fecha_inicial";
+	public static final String GENERO = "genero";
+	public static final String PLATAFORMA = "plataforma";
 
 
 }
