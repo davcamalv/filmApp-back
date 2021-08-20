@@ -9,9 +9,8 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
 @Entity
-@Table(name = "platform")
-public class Platform {
-	
+@Table(name = "genre")
+public class Genre {
 	@Id
 	@NotNull
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -21,22 +20,8 @@ public class Platform {
 	@Column(name = "name")
 	private String name;
 	
-	@Column(name = "logo")
-	private String logo;
-	
 	@Column(name = "short_name")
 	private String shortName;
-
-	public Platform(@NotNull String name, String logo, String shortName) {
-		super();
-		this.name = name;
-		this.logo = logo;
-		this.shortName = shortName;
-	}
-
-	public Platform() {
-		super();
-	}
 
 	public Long getId() {
 		return id;
@@ -54,20 +39,22 @@ public class Platform {
 		this.name = name;
 	}
 
-	public String getLogo() {
-		return logo;
-	}
-
-	public void setLogo(String logo) {
-		this.logo = logo;
-	}
-
 	public String getShortName() {
 		return shortName;
 	}
 
 	public void setShortName(String shortName) {
 		this.shortName = shortName;
+	}
+
+	public Genre(@NotNull String name, String shortName) {
+		super();
+		this.name = name;
+		this.shortName = shortName;
+	}
+
+	public Genre() {
+		super();
 	}
 	
 }

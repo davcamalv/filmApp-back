@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -52,7 +54,7 @@ public class MessageService {
 
 	@Autowired
 	private SelectableService selectableService;
-	
+
 	@Autowired
 	private FunctionService functionService;
 
@@ -133,10 +135,8 @@ public class MessageService {
 		MessageDTO res;
 		try {
 			String methodName = response.getOutput().getActions().get(0).getName();
-			Map<String, Object> parameters = response.getOutput().getActions().get(0).getParameters();
-			parameters.put(USER_INPUT, userMessage.getMessage());
-			Method method = getClass().getDeclaredMethod(methodName, Map.class);
-			res = (MessageDTO) method.invoke(this, parameters);
+			Method method = getClass().getDeclaredMethod(methodName, MessageResponse.class, String.class);
+			res = (MessageDTO) method.invoke(this, response, userMessage.getMessage());
 		} catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
 			Map<String, String> htmlAttributes = new HashMap<>();
 			htmlAttributes.put(Constants.STYLE, Constants.MARGIN_0);
@@ -147,10 +147,20 @@ public class MessageService {
 		return res;
 	}
 
-	protected MessageDTO getPremieres(Map<String, Object> params) throws ParseException {
+	private Map<String, String> getParameters(MessageResponse response, String userInput) {
+		Map<String, String> parameters = response.getOutput().getActions().get(0).getParameters().entrySet().stream()
+				.collect(HashMap::new,
+						(m, v) -> m.put(v.getKey(), v.getValue() == null ? null : String.valueOf(v.getValue())),
+						HashMap::putAll);
+		parameters.put(USER_INPUT, userInput);
+		return parameters;
+	}
+
+	protected MessageDTO getPremieres(MessageResponse response, String userInput) throws ParseException {
+		Map<String, String> parameters = getParameters(response, userInput);
 		Date date = null;
-		String dateStr = (String) params.get("date");
-		String platformStr = (String) params.get("provider");
+		String dateStr = parameters.get("date");
+		String platformStr = parameters.get("provider");
 		if (dateStr != null && !"saltar".equals(dateStr)) {
 			date = new SimpleDateFormat("yyyy-MM-dd").parse(dateStr);
 		}
@@ -170,38 +180,71 @@ public class MessageService {
 		return getPremiereMessage(premieres);
 	}
 
-	protected MessageDTO getSearches(Map<String, Object> params) {
-		String title = (String) params.get(USER_INPUT);
+	protected MessageDTO getSearches(MessageResponse response, String userInput) {
+		Map<String, String> parameters = getParameters(response, userInput);
+		String title = parameters.get(USER_INPUT);
 		List<Option> options;
 		List<SearchDTO> searches = justWatchService.getSearches(title);
 		if (searches.isEmpty()) {
 			return getMessageError("Disculpa, no he encontrado ningún resultado");
 		} else {
-			options = searches.stream().map(x -> new Option(x.getTitle() + " " + x.getYear(), x.getUrl()))
+			options = searches.stream().map(x -> new Option(x.getTitle() + " " + x.getYear(), x.getUrl(), x.getImage()))
 					.collect(Collectors.toList());
 		}
 		return createOptionMessage("¿A cuál de los siguientes resultados se refiere?", "", options);
 	}
 
-	protected MessageDTO getFunctions(Map<String, Object> params) {
+	protected MessageDTO getFilteredSearches(MessageResponse response, String userInput) {
+		Map<String, String> parameters = getParameters(response, userInput);
+		List<Option> options;
+		List<SearchDTO> searches = justWatchService.getFilteredSearches(parameters);
+		if (searches.isEmpty()) {
+			return getMessageError("Disculpa, no he encontrado ningún resultado");
+		} else {
+			options = searches.stream().map(x -> new Option(x.getTitle(), x.getUrl(), x.getImage()))
+					.collect(Collectors.toList());
+		}
+		return createOptionMessage("He encontrado los siguientes resultados, ¿sobre cuál querría más información?", "",
+				options);
+	}
+
+	protected MessageDTO getFunctions(MessageResponse response, String userInput) {
 		String text = "Las funciones que tengo implementadas actualmente son las siguientes:" + Constants.BR;
 		List<Option> options = new ArrayList<>();
 		List<Function> functions = functionService.findAll();
 		for (Function function : functions) {
 			text = text + Constants.BR + function.getDescription();
-			options.add(new Option(function.getButton_label(), function.getButton_value()));
+			options.add(new Option(function.getButton_label(), function.getButton_value(), null));
 		}
-		options.add(new Option("No quiero realizar ninguna acción actualmente", "No quiero realizar ninguna acción actualmente"));
+		options.add(new Option("No quiero realizar ninguna acción actualmente",
+				"No quiero realizar ninguna acción actualmente", null));
 		text = text + Constants.BR + Constants.BR + "¿Desea realizar alguna de estas acciones?";
 		return createOptionMessage(text, "", options);
 	}
 
-	protected MessageDTO getMediaContent(Map<String, Object> params) {
-		MediaContentDTO mediaContentDTO = justWatchService.getMediaContent((String) params.get(USER_INPUT));
+	protected MessageDTO getMediaContent(MessageResponse response, String userInput) {
+		Map<String, String> parameters = getParameters(response, userInput);
+		MediaContentDTO mediaContentDTO = justWatchService.getMediaContent((String) parameters.get(USER_INPUT));
 		if (mediaContentDTO == null) {
 			return getMessageError("No he conseguido obtener información sobre el contenido indicado");
 		}
 		return createMediaContentMessage(mediaContentDTO);
+	}
+
+	protected MessageDTO getPlatforms(MessageResponse response, String userInput) {
+		Map<String, String> parameters = getParameters(response, userInput);
+		List<Option> options = platformService.findAll().stream()
+				.map(x -> new Option(x.getName(), x.getName(), x.getLogo())).collect(Collectors.toList());
+		options.add(new Option("Me da igual la plataforma", "Me da igual la plataforma", null));
+		return createOptionMessage(parameters.get("mensaje"), "", options);
+	}
+
+	protected MessageDTO getYears(MessageResponse response, String userInput) {
+		Map<String, String> parameters = getParameters(response, userInput);
+		List<Option> options = IntStream.rangeClosed(1900, Calendar.getInstance().get(Calendar.YEAR))
+				.mapToObj(x -> new Option(String.valueOf(x), String.valueOf(x), null)).collect(Collectors.toList());
+		options.add(new Option("Me da igual el año", "Me da igual el año", null));
+		return createOptionMessage(parameters.get("mensaje"), "", options);
 	}
 
 	private MessageDTO createMediaContentMessage(MediaContentDTO mediaContentDTO) {
@@ -235,6 +278,7 @@ public class MessageService {
 		}
 		message = message + Utils.createHtmlTag(Constants.DIV, typeTitle + typeValue, htmlAttributes);
 		message = message + createPricesMessage(mediaContentDTO);
+		
 		return new MessageDTO(message, SenderType.server.name(), false, null);
 	}
 
@@ -245,54 +289,74 @@ public class MessageService {
 
 		String priceTitle = Utils.createHtmlTag(Constants.H3, "Precios:", htmlAttributes);
 
-		htmlAttributes.put(Constants.STYLE, Constants.FLOAT_LEFT + Constants.WIDTH_100);
+		htmlAttributes.put(Constants.STYLE, Constants.FLOAT_LEFT + Constants.WIDTH_100 + Constants.MARGIN_BOTTOM_2_PERCENT);
 
 		String res = Utils.createHtmlTag(Constants.DIV, Constants.BR + priceTitle, htmlAttributes);
-		String tableContent = "";
-		htmlAttributes.put(Constants.STYLE, Constants.ROTATE_TEXT);
-		String pStream = Utils.createHtmlTag(Constants.P, "Stream", htmlAttributes);
-		htmlAttributes.put(Constants.STYLE, Constants.BORDER_SOLID_1PX);
-		String thStream = Utils.createHtmlTag(Constants.TH, pStream, htmlAttributes);
-		String tdStreamContent = "";
-		for (PlatformWithPriceDTO price : mediaContentDTO.getStream()) {
-			tdStreamContent = tdStreamContent + getPricesTd(price);
-		}
-		String tdStream = Utils.createHtmlTag(Constants.TD, tdStreamContent, htmlAttributes);
+		
 		htmlAttributes.clear();
-		tableContent = tableContent + Utils.createHtmlTag(Constants.TR, thStream + tdStream, htmlAttributes);
+		htmlAttributes.put(Constants.STYLE, Constants.MARGIN_2_PERCENT);
+		String noDisponible = Utils.createHtmlTag(Constants.P, "Actualmente no se encuentra disponible en ninguna plataforma", htmlAttributes);
+		
+		htmlAttributes.clear();
+		htmlAttributes.put(Constants.CLASS, Constants.COLLAPSIBLE);
+		htmlAttributes.put(Constants.ON_CLICK, Constants.COLLAPSIBLE_FUNCTION);
 
-		htmlAttributes.put(Constants.STYLE, Constants.ROTATE_TEXT);
-		String pRent = Utils.createHtmlTag(Constants.P, "Alquilar", htmlAttributes);
-		htmlAttributes.put(Constants.STYLE, Constants.BORDER_SOLID_1PX);
-		String thRent = Utils.createHtmlTag(Constants.TH, pRent, htmlAttributes);
-		String tdRentContent = "";
-		for (PlatformWithPriceDTO price : mediaContentDTO.getRent()) {
-			tdRentContent = tdRentContent + getPricesTd(price);
+		String buttonStream = Utils.createHtmlTag(Constants.BUTTON, "Stream", htmlAttributes);
+		String streamContent = "";
+		if(!mediaContentDTO.getStream().isEmpty()) {
+			for (PlatformWithPriceDTO price : mediaContentDTO.getStream()) {
+				streamContent = streamContent + getPricesDiv(price);
+			}
+		}else {
+			streamContent = noDisponible;
 		}
-		String tdRent = Utils.createHtmlTag(Constants.TD, tdRentContent, htmlAttributes);
 		htmlAttributes.clear();
-		tableContent = tableContent + Utils.createHtmlTag(Constants.TR, thRent + tdRent, htmlAttributes);
-
-		htmlAttributes.put(Constants.STYLE, Constants.ROTATE_TEXT);
-		String pBuy = Utils.createHtmlTag(Constants.P, "Comprar", htmlAttributes);
-		htmlAttributes.put(Constants.STYLE, Constants.BORDER_SOLID_1PX);
-		String thBuy = Utils.createHtmlTag(Constants.TH, pBuy, htmlAttributes);
-		String tdBuyContent = "";
-		for (PlatformWithPriceDTO price : mediaContentDTO.getBuy()) {
-			tdBuyContent = tdBuyContent + getPricesTd(price);
-		}
-		String tdBuy = Utils.createHtmlTag(Constants.TD, tdBuyContent, htmlAttributes);
+		htmlAttributes.put(Constants.CLASS, Constants.COLLAPSIBLE_CONTENT);
+		String divStream = Utils.createHtmlTag(Constants.DIV, streamContent, htmlAttributes);
 		htmlAttributes.clear();
-		tableContent = tableContent + Utils.createHtmlTag(Constants.TR, thBuy + tdBuy, htmlAttributes);
+		res = res + buttonStream + divStream;
 
 		htmlAttributes.clear();
-		htmlAttributes.put(Constants.STYLE, Constants.WIDTH_80 + Constants.MARGIN_AUTO + Constants.BORDER_SOLID_1PX
-				+ Constants.BORDER_COLLAPSE_COLLAPSE);
-		res = res + Utils.createHtmlTag(Constants.TABLE, tableContent, htmlAttributes);
+		htmlAttributes.put(Constants.CLASS, Constants.COLLAPSIBLE);
+		htmlAttributes.put(Constants.ON_CLICK, Constants.COLLAPSIBLE_FUNCTION);
+
+		String buttonRent = Utils.createHtmlTag(Constants.BUTTON, "Alquilar", htmlAttributes);
+		String rentContent = "";
+		if(!mediaContentDTO.getRent().isEmpty()) {
+			for (PlatformWithPriceDTO price : mediaContentDTO.getRent()) {
+				rentContent = rentContent + getPricesDiv(price);
+			}
+		}else {
+			rentContent = noDisponible;
+		}
+		htmlAttributes.clear();
+		htmlAttributes.put(Constants.CLASS, Constants.COLLAPSIBLE_CONTENT);
+		String divRent = Utils.createHtmlTag(Constants.DIV, rentContent, htmlAttributes);
+		htmlAttributes.clear();
+		res = res + buttonRent + divRent;
+
+		htmlAttributes.clear();
+		htmlAttributes.put(Constants.CLASS, Constants.COLLAPSIBLE);
+		htmlAttributes.put(Constants.ON_CLICK, Constants.COLLAPSIBLE_FUNCTION);
+
+		String buttonBuy = Utils.createHtmlTag(Constants.BUTTON, "Comprar", htmlAttributes);
+		String buyContent = "";
+		if(!mediaContentDTO.getBuy().isEmpty()) {
+			for (PlatformWithPriceDTO price : mediaContentDTO.getBuy()) {
+				buyContent = buyContent + getPricesDiv(price);
+			}
+		}else {
+			buyContent = noDisponible;
+		}
+		htmlAttributes.clear();
+		htmlAttributes.put(Constants.CLASS, Constants.COLLAPSIBLE_CONTENT);
+		String divBuy = Utils.createHtmlTag(Constants.DIV, buyContent, htmlAttributes);
+		htmlAttributes.clear();
+		res = res + buttonBuy + divBuy;
 		return res;
 	}
 
-	private String getPricesTd(PlatformWithPriceDTO price) {
+	private String getPricesDiv(PlatformWithPriceDTO price) {
 		Map<String, String> htmlAttributes = new HashMap<>();
 		String cost = Utils.createHtmlTag(Constants.P, price.getCost(), htmlAttributes);
 		String center = Utils.createHtmlTag(Constants.CENTER, cost, htmlAttributes);
@@ -373,7 +437,7 @@ public class MessageService {
 			List<DialogNodeOutputOptionsElement> watsonOptions) {
 		List<Option> options = new ArrayList<>();
 		for (DialogNodeOutputOptionsElement watsonOption : watsonOptions) {
-			options.add(new Option(watsonOption.getLabel(), watsonOption.getValue().getInput().text()));
+			options.add(new Option(watsonOption.getLabel(), watsonOption.getValue().getInput().text(), null));
 		}
 
 		return createOptionMessage(title, description, options);
@@ -384,7 +448,7 @@ public class MessageService {
 		htmlAttributes.put(Constants.STYLE, Constants.MARGIN_0);
 		Selectable selectable = new Selectable(title, description, options);
 		selectable = selectableService.save(selectable);
-		List<OptionDTO> optionsDTO = options.stream().map(x -> new OptionDTO(x.getLabel(), x.getText()))
+		List<OptionDTO> optionsDTO = options.stream().map(x -> new OptionDTO(x.getLabel(), x.getText(), x.getImage()))
 				.collect(Collectors.toList());
 		SelectableDTO selectableDTO = new SelectableDTO(selectable.getId(), optionsDTO);
 		String html = Utils.createHtmlTag(Constants.P, title + description, htmlAttributes);
