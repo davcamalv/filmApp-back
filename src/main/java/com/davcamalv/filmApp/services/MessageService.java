@@ -277,9 +277,8 @@ public class MessageService {
 			message = message + Utils.createHtmlTag(Constants.DIV, scoreTitle + scoreValue, htmlAttributes);
 		}
 		message = message + Utils.createHtmlTag(Constants.DIV, typeTitle + typeValue, htmlAttributes);
-		if(!mediaContentDTO.getBuy().isEmpty() || !mediaContentDTO.getStream().isEmpty() || !mediaContentDTO.getRent().isEmpty()) {
-			message = message + createPricesMessage(mediaContentDTO);
-		}
+		message = message + createPricesMessage(mediaContentDTO);
+		
 		return new MessageDTO(message, SenderType.server.name(), false, null);
 	}
 
@@ -290,54 +289,74 @@ public class MessageService {
 
 		String priceTitle = Utils.createHtmlTag(Constants.H3, "Precios:", htmlAttributes);
 
-		htmlAttributes.put(Constants.STYLE, Constants.FLOAT_LEFT + Constants.WIDTH_100);
+		htmlAttributes.put(Constants.STYLE, Constants.FLOAT_LEFT + Constants.WIDTH_100 + Constants.MARGIN_BOTTOM_2_PERCENT);
 
 		String res = Utils.createHtmlTag(Constants.DIV, Constants.BR + priceTitle, htmlAttributes);
-		String tableContent = "";
-		htmlAttributes.put(Constants.STYLE, Constants.ROTATE_TEXT);
-		String pStream = Utils.createHtmlTag(Constants.P, "Stream", htmlAttributes);
-		htmlAttributes.put(Constants.STYLE, Constants.BORDER_SOLID_1PX);
-		String thStream = Utils.createHtmlTag(Constants.TH, pStream, htmlAttributes);
-		String tdStreamContent = "";
-		for (PlatformWithPriceDTO price : mediaContentDTO.getStream()) {
-			tdStreamContent = tdStreamContent + getPricesTd(price);
-		}
-		String tdStream = Utils.createHtmlTag(Constants.TD, tdStreamContent, htmlAttributes);
+		
 		htmlAttributes.clear();
-		tableContent = tableContent + Utils.createHtmlTag(Constants.TR, thStream + tdStream, htmlAttributes);
+		htmlAttributes.put(Constants.STYLE, Constants.MARGIN_2_PERCENT);
+		String noDisponible = Utils.createHtmlTag(Constants.P, "Actualmente no se encuentra disponible en ninguna plataforma", htmlAttributes);
+		
+		htmlAttributes.clear();
+		htmlAttributes.put(Constants.CLASS, Constants.COLLAPSIBLE);
+		htmlAttributes.put(Constants.ON_CLICK, Constants.COLLAPSIBLE_FUNCTION);
 
-		htmlAttributes.put(Constants.STYLE, Constants.ROTATE_TEXT);
-		String pRent = Utils.createHtmlTag(Constants.P, "Alquilar", htmlAttributes);
-		htmlAttributes.put(Constants.STYLE, Constants.BORDER_SOLID_1PX);
-		String thRent = Utils.createHtmlTag(Constants.TH, pRent, htmlAttributes);
-		String tdRentContent = "";
-		for (PlatformWithPriceDTO price : mediaContentDTO.getRent()) {
-			tdRentContent = tdRentContent + getPricesTd(price);
+		String buttonStream = Utils.createHtmlTag(Constants.BUTTON, "Stream", htmlAttributes);
+		String streamContent = "";
+		if(!mediaContentDTO.getStream().isEmpty()) {
+			for (PlatformWithPriceDTO price : mediaContentDTO.getStream()) {
+				streamContent = streamContent + getPricesDiv(price);
+			}
+		}else {
+			streamContent = noDisponible;
 		}
-		String tdRent = Utils.createHtmlTag(Constants.TD, tdRentContent, htmlAttributes);
 		htmlAttributes.clear();
-		tableContent = tableContent + Utils.createHtmlTag(Constants.TR, thRent + tdRent, htmlAttributes);
-
-		htmlAttributes.put(Constants.STYLE, Constants.ROTATE_TEXT);
-		String pBuy = Utils.createHtmlTag(Constants.P, "Comprar", htmlAttributes);
-		htmlAttributes.put(Constants.STYLE, Constants.BORDER_SOLID_1PX);
-		String thBuy = Utils.createHtmlTag(Constants.TH, pBuy, htmlAttributes);
-		String tdBuyContent = "";
-		for (PlatformWithPriceDTO price : mediaContentDTO.getBuy()) {
-			tdBuyContent = tdBuyContent + getPricesTd(price);
-		}
-		String tdBuy = Utils.createHtmlTag(Constants.TD, tdBuyContent, htmlAttributes);
+		htmlAttributes.put(Constants.CLASS, Constants.COLLAPSIBLE_CONTENT);
+		String divStream = Utils.createHtmlTag(Constants.DIV, streamContent, htmlAttributes);
 		htmlAttributes.clear();
-		tableContent = tableContent + Utils.createHtmlTag(Constants.TR, thBuy + tdBuy, htmlAttributes);
+		res = res + buttonStream + divStream;
 
 		htmlAttributes.clear();
-		htmlAttributes.put(Constants.STYLE, Constants.WIDTH_80 + Constants.MARGIN_AUTO + Constants.BORDER_SOLID_1PX
-				+ Constants.BORDER_COLLAPSE_COLLAPSE);
-		res = res + Utils.createHtmlTag(Constants.TABLE, tableContent, htmlAttributes);
+		htmlAttributes.put(Constants.CLASS, Constants.COLLAPSIBLE);
+		htmlAttributes.put(Constants.ON_CLICK, Constants.COLLAPSIBLE_FUNCTION);
+
+		String buttonRent = Utils.createHtmlTag(Constants.BUTTON, "Alquilar", htmlAttributes);
+		String rentContent = "";
+		if(!mediaContentDTO.getRent().isEmpty()) {
+			for (PlatformWithPriceDTO price : mediaContentDTO.getRent()) {
+				rentContent = rentContent + getPricesDiv(price);
+			}
+		}else {
+			rentContent = noDisponible;
+		}
+		htmlAttributes.clear();
+		htmlAttributes.put(Constants.CLASS, Constants.COLLAPSIBLE_CONTENT);
+		String divRent = Utils.createHtmlTag(Constants.DIV, rentContent, htmlAttributes);
+		htmlAttributes.clear();
+		res = res + buttonRent + divRent;
+
+		htmlAttributes.clear();
+		htmlAttributes.put(Constants.CLASS, Constants.COLLAPSIBLE);
+		htmlAttributes.put(Constants.ON_CLICK, Constants.COLLAPSIBLE_FUNCTION);
+
+		String buttonBuy = Utils.createHtmlTag(Constants.BUTTON, "Comprar", htmlAttributes);
+		String buyContent = "";
+		if(!mediaContentDTO.getBuy().isEmpty()) {
+			for (PlatformWithPriceDTO price : mediaContentDTO.getBuy()) {
+				buyContent = buyContent + getPricesDiv(price);
+			}
+		}else {
+			buyContent = noDisponible;
+		}
+		htmlAttributes.clear();
+		htmlAttributes.put(Constants.CLASS, Constants.COLLAPSIBLE_CONTENT);
+		String divBuy = Utils.createHtmlTag(Constants.DIV, buyContent, htmlAttributes);
+		htmlAttributes.clear();
+		res = res + buttonBuy + divBuy;
 		return res;
 	}
 
-	private String getPricesTd(PlatformWithPriceDTO price) {
+	private String getPricesDiv(PlatformWithPriceDTO price) {
 		Map<String, String> htmlAttributes = new HashMap<>();
 		String cost = Utils.createHtmlTag(Constants.P, price.getCost(), htmlAttributes);
 		String center = Utils.createHtmlTag(Constants.CENTER, cost, htmlAttributes);
