@@ -1,6 +1,6 @@
 package com.davcamalv.filmApp.domain;
 
-import java.util.List;
+import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -56,13 +56,20 @@ public class MediaContent {
 	
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "media_content_platform", joinColumns = @JoinColumn(name = "media_content_id"), inverseJoinColumns = @JoinColumn(name = "platform_id"))
-	private List<Platform> platforms;
+	private Set<Platform> platforms;
 	
 	@Column(name = "search_performed")
 	private boolean searchPerformed;
+	
+	@Column(name = "tmdb_id", unique = true)
+	private Integer tmdbId;
+	
+	@ManyToMany(fetch = FetchType.EAGER)
+	@JoinTable(name = "media_content_genre", joinColumns = @JoinColumn(name = "media_content_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
+	private Set<Genre> genres;
 
 	public MediaContent(String title, String description, MediaType mediaType, String creationDate, String justWatchUrl,
-			String imdbId, String poster, String score, List<Platform> platforms) {
+			String imdbId, String poster, String score, Set<Platform> platforms, Integer tmdbId, Set<Genre> genres) {
 		super();
 		this.title = title;
 		this.description = description;
@@ -73,6 +80,8 @@ public class MediaContent {
 		this.poster = poster;
 		this.score = score;
 		this.platforms = platforms;
+		this.tmdbId = tmdbId;
+		this.genres = genres;
 	}
 
 	public MediaContent() {
@@ -151,11 +160,11 @@ public class MediaContent {
 		this.score = score;
 	}
 
-	public List<Platform> getPlatforms() {
+	public Set<Platform> getPlatforms() {
 		return platforms;
 	}
 
-	public void setPlatforms(List<Platform> platforms) {
+	public void setPlatforms(Set<Platform> platforms) {
 		this.platforms = platforms;
 	}
 
@@ -165,6 +174,22 @@ public class MediaContent {
 
 	public void setSearchPerformed(boolean searchPerformed) {
 		this.searchPerformed = searchPerformed;
+	}
+
+	public Integer getTmdbId() {
+		return tmdbId;
+	}
+
+	public void setTmdbId(Integer tmdbId) {
+		this.tmdbId = tmdbId;
+	}
+
+	public Set<Genre> getGenres() {
+		return genres;
+	}
+
+	public void setGenres(Set<Genre> genres) {
+		this.genres = genres;
 	}
 	
 }

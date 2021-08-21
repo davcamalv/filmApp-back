@@ -22,6 +22,9 @@ public class Genre {
 	
 	@Column(name = "short_name")
 	private String shortName;
+	
+	@Column(name = "tmdb_id")
+	private Integer tmdbId;
 
 	public Long getId() {
 		return id;
@@ -47,10 +50,19 @@ public class Genre {
 		this.shortName = shortName;
 	}
 
-	public Genre(@NotNull String name, String shortName) {
+	public Integer getTmdbId() {
+		return tmdbId;
+	}
+
+	public void setTmdbId(Integer tmdbId) {
+		this.tmdbId = tmdbId;
+	}
+
+	public Genre(@NotNull String name, String shortName, Integer tmdbId) {
 		super();
 		this.name = name;
 		this.shortName = shortName;
+		this.tmdbId = tmdbId;
 	}
 
 	public Genre() {

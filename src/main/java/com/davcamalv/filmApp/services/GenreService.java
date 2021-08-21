@@ -20,4 +20,9 @@ public class GenreService {
 	public Optional<Genre> getByName(String name) {
 		return genreRepository.findByName(name);
 	}
+	
+	public Optional<Genre> getByTmdbId(Integer tmdbId) {
+		return genreRepository.findByTmdbId(tmdbId);
+	}
+	
 }
