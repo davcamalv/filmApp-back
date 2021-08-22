@@ -68,5 +68,9 @@ public class Constants {
 			+ "var content = this.nextElementSibling;if (content.style.maxHeight){"
 			+ "content.style.maxHeight = null;} else {content.style.maxHeight = "
 			+ "content.scrollHeight + \"px\"; }";
+	
+//	URLs
+	public static final String TMBD_BASE_URL = "https://api.themoviedb.org/3/";
+
 
 }

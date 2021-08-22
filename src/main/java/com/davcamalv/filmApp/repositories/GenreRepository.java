@@ -11,4 +11,6 @@ import com.davcamalv.filmApp.domain.Genre;
 public interface GenreRepository extends JpaRepository<Genre, Long>{
 
 	Optional<Genre> findByName(String name);
+
+	Optional<Genre> findByTmdbId(Integer tmdbId);
 }

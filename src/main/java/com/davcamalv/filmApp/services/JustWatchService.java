@@ -8,6 +8,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
@@ -22,13 +24,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import com.davcamalv.filmApp.domain.Genre;
 import com.davcamalv.filmApp.domain.MediaContent;
 import com.davcamalv.filmApp.domain.Platform;
 import com.davcamalv.filmApp.domain.Premiere;
 import com.davcamalv.filmApp.domain.Price;
 import com.davcamalv.filmApp.dtos.MediaContentDTO;
+import com.davcamalv.filmApp.dtos.MediaContentTMDBDTO;
 import com.davcamalv.filmApp.dtos.PlatformWithPriceDTO;
 import com.davcamalv.filmApp.dtos.SearchDTO;
+import com.davcamalv.filmApp.enums.MediaType;
 import com.davcamalv.filmApp.enums.PriceType;
 import com.davcamalv.filmApp.utils.Constants;
 import com.davcamalv.filmApp.utils.Utils;
@@ -53,6 +58,9 @@ public class JustWatchService {
 
 	@Autowired
 	private PriceService priceService;
+	
+	@Autowired
+	private TMDBService tmdbService;
 
 	@Scheduled(cron = "0 0 3 * * ?", zone = "Europe/Paris")
 	protected void scrapePremieres() {
@@ -286,6 +294,8 @@ public class JustWatchService {
 				score = imdb.get(0).findElement(By.tagName("a")).getText();
 				imdbId = imdb.get(0).findElement(By.tagName("a")).getAttribute("href");
 				imdbId = imdbId.replace("https://www.imdb.com/title/", "").split("//?")[0];
+				MediaContentTMDBDTO mediaContentTMDBDTO = tmdbService.getMediaContentByImdbID(imdbId);
+				setTmdbIdAndGenres(mediaContentTMDBDTO, mediaContentValue);
 			}
 			mediaContentValue.setCreationDate(creationDate);
 			mediaContentValue.setDescription(description);
@@ -312,6 +322,24 @@ public class JustWatchService {
 		return res;
 	}
 
+	private void setTmdbIdAndGenres(MediaContentTMDBDTO mediaContentTMDBDTO, MediaContent mediaContentValue) {
+		Set<Genre> genres = null;
+		if(mediaContentValue.getMediaType().equals(MediaType.MOVIE)) {
+			if(mediaContentTMDBDTO != null && mediaContentTMDBDTO.getMovie_results() != null && !mediaContentTMDBDTO.getMovie_results().isEmpty()) {
+				mediaContentValue.setTmdbId(mediaContentTMDBDTO.getMovie_results().get(0).getId());
+				genres = mediaContentTMDBDTO.getMovie_results().get(0).getGenre_ids().stream().map(x -> genreService.getByTmdbId(x).get()).collect(Collectors.toSet());
+			}
+			
+		}else {
+			if(mediaContentTMDBDTO != null && mediaContentTMDBDTO.getTv_results() != null && !mediaContentTMDBDTO.getTv_results().isEmpty()) {
+				mediaContentValue.setTmdbId(mediaContentTMDBDTO.getTv_results().get(0).getId());
+				genres = mediaContentTMDBDTO.getTv_results().get(0).getGenre_ids().stream().map(x -> genreService.getByTmdbId(x).get()).collect(Collectors.toSet());
+			}
+		}
+		
+		mediaContentValue.setGenres(genres);
+	}
+	
 	private List<PlatformWithPriceDTO> scrapePrices(List<WebElement> webElements, MediaContent mediaContent,
 			PriceType priceType) {
 		List<PlatformWithPriceDTO> res = new ArrayList<>();
