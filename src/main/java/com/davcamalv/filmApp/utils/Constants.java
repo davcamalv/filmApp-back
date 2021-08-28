@@ -53,6 +53,8 @@ public class Constants {
 	public static final String CLASIFICACION_EDAD = "clasificacion_edad";
 	public static final String COLLAPSIBLE = "collapsible";
 	public static final String COLLAPSIBLE_CONTENT = "collapsible-content";
+	public static final String CONTENT_MAPPING = "content-mapping";
+	public static final String CONTENT_MAPPING_LIST = "content-mapping-list";
 	public static final String DATA_IMAGE = "data:image";
 	public static final String DATA_SRC = "data-src";
 	public static final String FECHA_FINAL = "fecha_final";

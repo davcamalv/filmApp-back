@@ -23,6 +23,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.davcamalv.filmApp.domain.Function;
+import com.davcamalv.filmApp.domain.MediaContent;
 import com.davcamalv.filmApp.domain.Message;
 import com.davcamalv.filmApp.domain.Option;
 import com.davcamalv.filmApp.domain.Platform;
@@ -69,6 +70,9 @@ public class MessageService {
 
 	@Autowired
 	private JustWatchService justWatchService;
+	
+	@Autowired
+	private MediaContentService mediaContentService;
 
 	public List<MessageDTO> findMessagesByUser(int pageNumber, int pageSize, User user) {
 		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id").descending());
@@ -220,6 +224,37 @@ public class MessageService {
 				"No quiero realizar ninguna acción actualmente", null));
 		text = text + Constants.BR + Constants.BR + "¿Desea realizar alguna de estas acciones?";
 		return createOptionMessage(text, "", options);
+	}
+	
+	protected MessageDTO getGenres(MessageResponse response, String userInput) {
+		Map<String, String> parameters = getParameters(response, userInput);
+		String res = "";
+		Optional<MediaContent> mediaContent = mediaContentService.getByJustWatchUrl(parameters.get("url_actual"));
+		if(mediaContent.isPresent() && !mediaContent.get().getGenres().isEmpty()) {
+			MediaContent mediaContentValue = mediaContent.get();
+			res = "Los géneros a los que pertenece " + mediaContentValue.getTitle() + " son los siguientes:" + Constants.BR;
+			List<String> genres = mediaContentValue.getGenres().stream().map(x -> x.getName()).collect(Collectors.toList());
+			res = res + createContentMappingMessage(genres);
+		}else {
+			res = "Lo siento no he encontrado información relacionada con los géneros";
+		}
+		return new MessageDTO(res, SenderType.server.name(), false, null);
+	}
+
+	private String createContentMappingMessage(List<String> values) {
+		HashMap<String, String> htmlAttributes = new HashMap<>();
+		String p = "";
+		String res = "";
+		for (String value : values) {
+			htmlAttributes.clear();
+			p = Utils.createHtmlTag(Constants.P, value, htmlAttributes);
+			htmlAttributes.put(Constants.CLASS, Constants.CONTENT_MAPPING);
+			res = res + Utils.createHtmlTag(Constants.DIV, p, htmlAttributes);
+		}
+		htmlAttributes.clear();
+		htmlAttributes.put(Constants.CLASS, Constants.CONTENT_MAPPING_LIST);
+		res = Utils.createHtmlTag(Constants.DIV, res, htmlAttributes);
+		return res;
 	}
 
 	protected MessageDTO getMediaContent(MessageResponse response, String userInput) {
