@@ -70,9 +70,12 @@ public class MessageService {
 
 	@Autowired
 	private JustWatchService justWatchService;
-	
+
 	@Autowired
 	private MediaContentService mediaContentService;
+
+	@Autowired
+	private TMDBService TMDBService;
 
 	public List<MessageDTO> findMessagesByUser(int pageNumber, int pageSize, User user) {
 		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id").descending());
@@ -225,17 +228,44 @@ public class MessageService {
 		text = text + Constants.BR + Constants.BR + "¿Desea realizar alguna de estas acciones?";
 		return createOptionMessage(text, "", options);
 	}
-	
+
+	protected MessageDTO getTrailer(MessageResponse response, String userInput) {
+		Map<String, String> parameters = getParameters(response, userInput);
+		String res = "Lo siento no he encontrado ningún tráiler";
+		justWatchService.getMediaContent(parameters.get("url_actual"));
+		Optional<MediaContent> mediaContent = mediaContentService.getByJustWatchUrl(parameters.get("url_actual"));
+		if (mediaContent.isPresent() && mediaContent.get().getImdbId() != null) {
+			MediaContent mediaContentValue = mediaContent.get();
+			String urlTrailer = TMDBService.getTrailer(mediaContentValue);
+			if (urlTrailer != null && !"".equals(urlTrailer)) {
+				res = Utils.createHtmlTag(Constants.P,
+						"Aquí tiene el tráiler de " + mediaContentValue.getTitle() + ":" + Constants.BR,
+						new HashMap<>());
+				res = res + createYoutubeVideo(urlTrailer);
+			}
+		}
+		return new MessageDTO(res, SenderType.server.name(), false, null);
+	}
+
+	private String createYoutubeVideo(String urlTrailer) {
+		return "<iframe width='560' height='315' src='https://www.youtube.com/embed/" + urlTrailer
+				+ "' title='YouTube video player' frameborder='0' allow='accelerometer; autoplay; "
+				+ "clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe>";
+	}
+
 	protected MessageDTO getGenres(MessageResponse response, String userInput) {
 		Map<String, String> parameters = getParameters(response, userInput);
 		String res = "";
+		justWatchService.getMediaContent(parameters.get("url_actual"));
 		Optional<MediaContent> mediaContent = mediaContentService.getByJustWatchUrl(parameters.get("url_actual"));
-		if(mediaContent.isPresent() && !mediaContent.get().getGenres().isEmpty()) {
+		if (mediaContent.isPresent() && !mediaContent.get().getGenres().isEmpty()) {
 			MediaContent mediaContentValue = mediaContent.get();
-			res = "Los géneros a los que pertenece " + mediaContentValue.getTitle() + " son los siguientes:" + Constants.BR;
-			List<String> genres = mediaContentValue.getGenres().stream().map(x -> x.getName()).collect(Collectors.toList());
+			res = "Los géneros a los que pertenece " + mediaContentValue.getTitle() + " son los siguientes:"
+					+ Constants.BR;
+			List<String> genres = mediaContentValue.getGenres().stream().map(x -> x.getName()).distinct()
+					.collect(Collectors.toList());
 			res = res + createContentMappingMessage(genres);
-		}else {
+		} else {
 			res = "Lo siento no he encontrado información relacionada con los géneros";
 		}
 		return new MessageDTO(res, SenderType.server.name(), false, null);
@@ -313,7 +343,7 @@ public class MessageService {
 		}
 		message = message + Utils.createHtmlTag(Constants.DIV, typeTitle + typeValue, htmlAttributes);
 		message = message + createPricesMessage(mediaContentDTO);
-		
+
 		return new MessageDTO(message, SenderType.server.name(), false, null);
 	}
 
@@ -324,25 +354,27 @@ public class MessageService {
 
 		String priceTitle = Utils.createHtmlTag(Constants.H3, "Precios:", htmlAttributes);
 
-		htmlAttributes.put(Constants.STYLE, Constants.FLOAT_LEFT + Constants.WIDTH_100 + Constants.MARGIN_BOTTOM_2_PERCENT);
+		htmlAttributes.put(Constants.STYLE,
+				Constants.FLOAT_LEFT + Constants.WIDTH_100 + Constants.MARGIN_BOTTOM_2_PERCENT);
 
 		String res = Utils.createHtmlTag(Constants.DIV, Constants.BR + priceTitle, htmlAttributes);
-		
+
 		htmlAttributes.clear();
 		htmlAttributes.put(Constants.STYLE, Constants.MARGIN_2_PERCENT);
-		String noDisponible = Utils.createHtmlTag(Constants.P, "Actualmente no se encuentra disponible en ninguna plataforma", htmlAttributes);
-		
+		String noDisponible = Utils.createHtmlTag(Constants.P,
+				"Actualmente no se encuentra disponible en ninguna plataforma", htmlAttributes);
+
 		htmlAttributes.clear();
 		htmlAttributes.put(Constants.CLASS, Constants.COLLAPSIBLE);
 		htmlAttributes.put(Constants.ON_CLICK, Constants.COLLAPSIBLE_FUNCTION);
 
 		String buttonStream = Utils.createHtmlTag(Constants.BUTTON, "Stream", htmlAttributes);
 		String streamContent = "";
-		if(!mediaContentDTO.getStream().isEmpty()) {
+		if (!mediaContentDTO.getStream().isEmpty()) {
 			for (PlatformWithPriceDTO price : mediaContentDTO.getStream()) {
 				streamContent = streamContent + getPricesDiv(price);
 			}
-		}else {
+		} else {
 			streamContent = noDisponible;
 		}
 		htmlAttributes.clear();
@@ -357,11 +389,11 @@ public class MessageService {
 
 		String buttonRent = Utils.createHtmlTag(Constants.BUTTON, "Alquilar", htmlAttributes);
 		String rentContent = "";
-		if(!mediaContentDTO.getRent().isEmpty()) {
+		if (!mediaContentDTO.getRent().isEmpty()) {
 			for (PlatformWithPriceDTO price : mediaContentDTO.getRent()) {
 				rentContent = rentContent + getPricesDiv(price);
 			}
-		}else {
+		} else {
 			rentContent = noDisponible;
 		}
 		htmlAttributes.clear();
@@ -376,11 +408,11 @@ public class MessageService {
 
 		String buttonBuy = Utils.createHtmlTag(Constants.BUTTON, "Comprar", htmlAttributes);
 		String buyContent = "";
-		if(!mediaContentDTO.getBuy().isEmpty()) {
+		if (!mediaContentDTO.getBuy().isEmpty()) {
 			for (PlatformWithPriceDTO price : mediaContentDTO.getBuy()) {
 				buyContent = buyContent + getPricesDiv(price);
 			}
-		}else {
+		} else {
 			buyContent = noDisponible;
 		}
 		htmlAttributes.clear();

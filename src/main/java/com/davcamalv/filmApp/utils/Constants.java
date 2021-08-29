@@ -61,7 +61,7 @@ public class Constants {
 	public static final String FECHA_INICIAL = "fecha_inicial";
 	public static final String GENERO = "genero";
 	public static final String PLATAFORMA = "plataforma";
-
+	public static final String TMDB_APIKEY ="tmdb.apikey";
 //	Events
 	public static final String ON_CLICK = "onclick";
 

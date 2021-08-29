@@ -296,21 +296,27 @@ public class JustWatchService {
 				imdbId = imdbId.replace("https://www.imdb.com/title/", "").split("//?")[0];
 				MediaContentTMDBDTO mediaContentTMDBDTO = tmdbService.getMediaContentByImdbID(imdbId);
 				setTmdbIdAndGenres(mediaContentTMDBDTO, mediaContentValue);
+				mediaContentValue.setSearchPerformed(true);
 			}
 			mediaContentValue.setCreationDate(creationDate);
 			mediaContentValue.setDescription(description);
 			mediaContentValue.setScore(score);
 			mediaContentValue.setImdbId(imdbId);
-			mediaContentValue.setSearchPerformed(true);
 			mediaContentService.save(mediaContentValue);
 			List<WebElement> monetizations = webDriver.findElements(By.className("monetizations"));
-			WebElement monetization = monetizations.get(monetizations.size() - 1);
-			List<WebElement> rents = monetization.findElements(By.className("price-comparison__grid__row--rent"));
-			List<WebElement> streams = monetization.findElements(By.className("price-comparison__grid__row--stream"));
-			List<WebElement> buyList = monetization.findElements(By.className("price-comparison__grid__row--buy"));
-			List<PlatformWithPriceDTO> rent = scrapePrices(rents, mediaContentValue, PriceType.RENT);
-			List<PlatformWithPriceDTO> stream = scrapePrices(streams, mediaContentValue, PriceType.STREAM);
-			List<PlatformWithPriceDTO> buy = scrapePrices(buyList, mediaContentValue, PriceType.BUY);
+			List<PlatformWithPriceDTO> rent = null;
+			List<PlatformWithPriceDTO> stream = null;
+			List<PlatformWithPriceDTO> buy = null;
+
+			if(!monetizations.isEmpty()) {
+				WebElement monetization = monetizations.get(monetizations.size() - 1);
+				List<WebElement> rents = monetization.findElements(By.className("price-comparison__grid__row--rent"));
+				List<WebElement> streams = monetization.findElements(By.className("price-comparison__grid__row--stream"));
+				List<WebElement> buyList = monetization.findElements(By.className("price-comparison__grid__row--buy"));
+				rent = scrapePrices(rents, mediaContentValue, PriceType.RENT);
+				stream = scrapePrices(streams, mediaContentValue, PriceType.STREAM);
+				buy = scrapePrices(buyList, mediaContentValue, PriceType.BUY);
+			}
 			res = new MediaContentDTO(mediaContentValue.getTitle(), mediaContentValue.getDescription(),
 					mediaContentValue.getMediaType().name(), mediaContentValue.getCreationDate(),
 					mediaContentValue.getPoster(), mediaContentValue.getScore(), rent, stream, buy);
