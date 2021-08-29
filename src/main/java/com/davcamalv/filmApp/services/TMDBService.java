@@ -1,12 +1,18 @@
 package com.davcamalv.filmApp.services;
 
+import java.util.List;
+
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.davcamalv.filmApp.domain.MediaContent;
 import com.davcamalv.filmApp.dtos.MediaContentTMDBDTO;
+import com.davcamalv.filmApp.dtos.TrailerDTO;
+import com.davcamalv.filmApp.dtos.TrailerResultDTO;
+import com.davcamalv.filmApp.enums.MediaType;
 import com.davcamalv.filmApp.utils.Constants;
 
 @Service
@@ -15,12 +21,45 @@ public class TMDBService {
 
 	@Autowired
 	private ConfigurationService configurationService;
-	
+
 	public MediaContentTMDBDTO getMediaContentByImdbID(String imdbID) {
 		RestTemplate restTemplate = new RestTemplate();
 		String url = Constants.TMBD_BASE_URL + "find/" + imdbID + "?api_key="
-				+ configurationService.getByProperty("tmdb.apikey").getValue() + "&language=es-ES&external_source=imdb_id";
+				+ configurationService.getByProperty(Constants.TMDB_APIKEY).getValue()
+				+ "&language=es-ES&external_source=imdb_id";
 		return restTemplate.getForEntity(url, MediaContentTMDBDTO.class).getBody();
+	}
+
+	public String getTrailer(MediaContent mediaContent) {
+		String res = "";
+		TrailerDTO response = null;
+		String url = Constants.TMBD_BASE_URL;
+		RestTemplate restTemplate = new RestTemplate();
+		MediaContentTMDBDTO mediaContentTMDBDTO = getMediaContentByImdbID(mediaContent.getImdbId());
+		if (mediaContent.getMediaType().equals(MediaType.MOVIE) && mediaContentTMDBDTO != null
+				&& mediaContentTMDBDTO.getMovie_results() != null
+				&& !mediaContentTMDBDTO.getMovie_results().isEmpty()) {
+			url = url + "movie/" + mediaContentTMDBDTO.getMovie_results().get(0).getId() + "/videos?api_key="
+					+ configurationService.getByProperty(Constants.TMDB_APIKEY).getValue() + "&language=es-ES";
+
+			response = restTemplate.getForEntity(url, TrailerDTO.class).getBody();
+		} else if (mediaContentTMDBDTO != null && mediaContentTMDBDTO.getTv_results() != null
+				&& !mediaContentTMDBDTO.getTv_results().isEmpty()) {
+			url = url + "tv/" + mediaContentTMDBDTO.getTv_results().get(0).getId() + "/videos?api_key="
+					+ configurationService.getByProperty(Constants.TMDB_APIKEY).getValue() + "&language=es-ES";
+
+			response = restTemplate.getForEntity(url, TrailerDTO.class).getBody();
+		}
+		
+		if(response != null) {
+			res = getTrailerUrl(response.getResults());
+		}
+		return res;
+	}
+
+	private String getTrailerUrl(List<TrailerResultDTO> videos) {
+		return videos.stream().filter(x -> "YouTube".equals(x.getSite()) && "Trailer".equals(x.getType()))
+				.map(x -> x.getKey()).findFirst().orElse("");
 	}
 
 }
