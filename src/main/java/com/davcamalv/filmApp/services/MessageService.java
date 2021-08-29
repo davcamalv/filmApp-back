@@ -33,6 +33,7 @@ import com.davcamalv.filmApp.domain.User;
 import com.davcamalv.filmApp.dtos.MediaContentDTO;
 import com.davcamalv.filmApp.dtos.MessageDTO;
 import com.davcamalv.filmApp.dtos.OptionDTO;
+import com.davcamalv.filmApp.dtos.PersonDTO;
 import com.davcamalv.filmApp.dtos.PlatformWithPriceDTO;
 import com.davcamalv.filmApp.dtos.SearchDTO;
 import com.davcamalv.filmApp.dtos.SelectableDTO;
@@ -229,11 +230,57 @@ public class MessageService {
 		return createOptionMessage(text, "", options);
 	}
 
+	protected MessageDTO getActors(MessageResponse response, String userInput) {
+		Map<String, String> parameters = getParameters(response, userInput);
+		String res = "Lo siento no he encontrado los actores";
+		justWatchService.getMediaContent(parameters.get(Constants.URL_ACTUAL));
+		Optional<MediaContent> mediaContent = mediaContentService
+				.getByJustWatchUrl(parameters.get(Constants.URL_ACTUAL));
+		if (mediaContent.isPresent() && mediaContent.get().getImdbId() != null) {
+			MediaContent mediaContentValue = mediaContent.get();
+			res = getActorsMessage(TMDBService.getCastByMediaContent(mediaContentValue), mediaContentValue);
+		}
+		return new MessageDTO(res, SenderType.server.name(), false, null);
+	}
+
+	private String getActorsMessage(List<PersonDTO> castByMediaContent, MediaContent mediaContent) {
+		String res = "Lo siento no he encontrado los actores";
+		String img = "";
+		String information = "";
+
+		String listDiv = "";
+		Map<String, String> htmlAttributes = new HashMap<>();
+		List<PersonDTO> actors = castByMediaContent.stream().filter(x -> x.getOrder() != null && x.getOrder() < 12)
+				.collect(Collectors.toList());
+		if (!actors.isEmpty()) {
+			res = Utils.createHtmlTag(Constants.P,
+					"Los actores principales de " + mediaContent.getTitle() + " son:" + Constants.BR, new HashMap<>());
+			for (PersonDTO personDTO : actors) {
+				htmlAttributes.clear();
+				htmlAttributes.put(Constants.SRC, Constants.TMBD_IMAGE_BASE_URL + personDTO.getProfile_path());
+
+				img = Utils.createHtmlTag(Constants.IMG, "", htmlAttributes);
+
+				htmlAttributes.clear();
+				htmlAttributes.put(Constants.STYLE, Constants.BOLD);
+				information = Utils.createHtmlTag(Constants.P, personDTO.getName(), htmlAttributes) + Utils.createHtmlTag(Constants.P, "(" + personDTO.getCharacter() + ")", new HashMap<>());
+				htmlAttributes.clear();
+				htmlAttributes.put(Constants.CLASS, Constants.PERSON);
+				listDiv = listDiv + Utils.createHtmlTag(Constants.DIV, img + Constants.BR + information, htmlAttributes);
+			}
+			htmlAttributes.clear();
+			htmlAttributes.put(Constants.CLASS, Constants.PERSON_LIST);
+			res = res + Utils.createHtmlTag(Constants.DIV, listDiv, htmlAttributes);
+		}
+		return res;
+	}
+
 	protected MessageDTO getTrailer(MessageResponse response, String userInput) {
 		Map<String, String> parameters = getParameters(response, userInput);
 		String res = "Lo siento no he encontrado ningún tráiler";
-		justWatchService.getMediaContent(parameters.get("url_actual"));
-		Optional<MediaContent> mediaContent = mediaContentService.getByJustWatchUrl(parameters.get("url_actual"));
+		justWatchService.getMediaContent(parameters.get(Constants.URL_ACTUAL));
+		Optional<MediaContent> mediaContent = mediaContentService
+				.getByJustWatchUrl(parameters.get(Constants.URL_ACTUAL));
 		if (mediaContent.isPresent() && mediaContent.get().getImdbId() != null) {
 			MediaContent mediaContentValue = mediaContent.get();
 			String urlTrailer = TMDBService.getTrailer(mediaContentValue);
@@ -256,8 +303,9 @@ public class MessageService {
 	protected MessageDTO getGenres(MessageResponse response, String userInput) {
 		Map<String, String> parameters = getParameters(response, userInput);
 		String res = "";
-		justWatchService.getMediaContent(parameters.get("url_actual"));
-		Optional<MediaContent> mediaContent = mediaContentService.getByJustWatchUrl(parameters.get("url_actual"));
+		justWatchService.getMediaContent(parameters.get(Constants.URL_ACTUAL));
+		Optional<MediaContent> mediaContent = mediaContentService
+				.getByJustWatchUrl(parameters.get(Constants.URL_ACTUAL));
 		if (mediaContent.isPresent() && !mediaContent.get().getGenres().isEmpty()) {
 			MediaContent mediaContentValue = mediaContent.get();
 			res = "Los géneros a los que pertenece " + mediaContentValue.getTitle() + " son los siguientes:"

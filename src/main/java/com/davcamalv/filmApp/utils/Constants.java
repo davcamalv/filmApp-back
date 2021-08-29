@@ -60,8 +60,11 @@ public class Constants {
 	public static final String FECHA_FINAL = "fecha_final";
 	public static final String FECHA_INICIAL = "fecha_inicial";
 	public static final String GENERO = "genero";
+	public static final String PERSON = "person";
+	public static final String PERSON_LIST = "person-list";
 	public static final String PLATAFORMA = "plataforma";
-	public static final String TMDB_APIKEY ="tmdb.apikey";
+	public static final String TMDB_APIKEY = "tmdb.apikey";
+	public static final String URL_ACTUAL = "url_actual";
 //	Events
 	public static final String ON_CLICK = "onclick";
 
@@ -73,6 +76,6 @@ public class Constants {
 	
 //	URLs
 	public static final String TMBD_BASE_URL = "https://api.themoviedb.org/3/";
-
+	public static final String TMBD_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original";
 
 }
