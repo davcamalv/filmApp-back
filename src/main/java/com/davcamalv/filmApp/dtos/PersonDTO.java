@@ -2,6 +2,8 @@ package com.davcamalv.filmApp.dtos;
 
 public class PersonDTO {
 	
+	private Integer id;
+	
 	private String name;
 	
 	private String character;
@@ -11,6 +13,20 @@ public class PersonDTO {
 	private Integer order;
 	
 	private String job;
+	
+	private String birthday;
+	
+	private String deathday;
+	
+	private String biography;
+
+	public Integer getId() {
+		return id;
+	}
+
+	public void setId(Integer id) {
+		this.id = id;
+	}
 
 	public String getName() {
 		return name;
@@ -52,13 +68,42 @@ public class PersonDTO {
 		this.job = job;
 	}
 
-	public PersonDTO(String name, String character, String profile_path, Integer order, String job) {
+	public String getBirthday() {
+		return birthday;
+	}
+
+	public void setBirthday(String birthday) {
+		this.birthday = birthday;
+	}
+
+	public String getDeathday() {
+		return deathday;
+	}
+
+	public void setDeathday(String deathday) {
+		this.deathday = deathday;
+	}
+
+	public String getBiography() {
+		return biography;
+	}
+
+	public void setBiography(String biography) {
+		this.biography = biography;
+	}
+
+	public PersonDTO(Integer id, String name, String character, String profile_path, Integer order, String job,
+			String birthday, String deathday, String biography) {
 		super();
+		this.id = id;
 		this.name = name;
 		this.character = character;
 		this.profile_path = profile_path;
 		this.order = order;
 		this.job = job;
+		this.birthday = birthday;
+		this.deathday = deathday;
+		this.biography = biography;
 	}
 
 	public PersonDTO() {

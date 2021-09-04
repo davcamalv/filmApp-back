@@ -1,5 +1,8 @@
 package com.davcamalv.filmApp.services;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +16,7 @@ import com.davcamalv.filmApp.domain.MediaContent;
 import com.davcamalv.filmApp.dtos.CreditsDTO;
 import com.davcamalv.filmApp.dtos.MediaContentTMDBDTO;
 import com.davcamalv.filmApp.dtos.PersonDTO;
+import com.davcamalv.filmApp.dtos.SearchPersonDTO;
 import com.davcamalv.filmApp.dtos.TrailerDTO;
 import com.davcamalv.filmApp.dtos.TrailerResultDTO;
 import com.davcamalv.filmApp.enums.MediaType;
@@ -59,9 +63,8 @@ public class TMDBService {
 				.map(x -> x.getKey()).findFirst().orElse("");
 	}
 
-	public List<PersonDTO> getCastByMediaContent(MediaContent mediaContent) {
-		List<PersonDTO> res = new ArrayList<>();
-		CreditsDTO response = null;
+	public CreditsDTO getCastByMediaContent(MediaContent mediaContent) {
+		CreditsDTO res = new CreditsDTO(new ArrayList<>(), new ArrayList<>());
 		String url = Constants.TMBD_BASE_URL;
 		RestTemplate restTemplate = new RestTemplate();
 		MediaContentTMDBDTO mediaContentTMDBDTO = getMediaContentByImdbID(mediaContent.getImdbId());
@@ -71,11 +74,38 @@ public class TMDBService {
 			url = url + type + mediaContentTMDBDTO.getMovie_results().get(0).getId() + "/credits?api_key="
 					+ configurationService.getByProperty(Constants.TMDB_APIKEY).getValue() + "&language=es-ES";
 
-			response = restTemplate.getForEntity(url, CreditsDTO.class).getBody();
+			res = restTemplate.getForEntity(url, CreditsDTO.class).getBody();
 		}
+		return res;
+	}
 
-		if (response != null) {
-			res = response.getCast();
+	public PersonDTO getDirector(List<PersonDTO> crew) {
+		PersonDTO res = null;
+		Integer id =  crew.stream().filter(x -> x.getJob() != null && "Director".equals(x.getJob())).findFirst()
+				.map(x -> x.getId()).orElse(null);
+		if(id != null) {
+			res = getPersonByID(id);
+		}
+		return res;
+	}
+	
+	public PersonDTO getPersonByID(Integer tmdbID) {
+		RestTemplate restTemplate = new RestTemplate();
+		String url = Constants.TMBD_BASE_URL + "person/" + tmdbID + "?api_key="
+				+ configurationService.getByProperty(Constants.TMDB_APIKEY).getValue()
+				+ "&language=es-ES";
+		return restTemplate.getForEntity(url, PersonDTO.class).getBody();
+	}
+	
+	public List<PersonDTO> searchPeople(String query) throws UnsupportedEncodingException {
+		List<PersonDTO> res = new ArrayList<>();
+		RestTemplate restTemplate = new RestTemplate();
+		String url = Constants.TMBD_BASE_URL + "search/person?api_key="
+				+ configurationService.getByProperty(Constants.TMDB_APIKEY).getValue()
+				+ "&language=es-ES&query=" + URLEncoder.encode(query, StandardCharsets.UTF_8.toString());
+		SearchPersonDTO response = restTemplate.getForEntity(url, SearchPersonDTO.class).getBody();
+		if(response != null) {
+			res = response.getResults();
 		}
 		return res;
 	}

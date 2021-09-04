@@ -62,6 +62,7 @@ public class Constants {
 	public static final String GENERO = "genero";
 	public static final String PERSON = "person";
 	public static final String PERSON_LIST = "person-list";
+	public static final String PERSON_PROFILE = "person-profile";
 	public static final String PLATAFORMA = "plataforma";
 	public static final String TMDB_APIKEY = "tmdb.apikey";
 	public static final String URL_ACTUAL = "url_actual";

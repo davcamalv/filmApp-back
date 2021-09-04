@@ -5,6 +5,9 @@ import java.util.List;
 public class CreditsDTO {
 
 	private List<PersonDTO> cast;
+	
+	private List<PersonDTO> crew;
+
 
 	public List<PersonDTO> getCast() {
 		return cast;
@@ -14,9 +17,18 @@ public class CreditsDTO {
 		this.cast = cast;
 	}
 
-	public CreditsDTO(List<PersonDTO> cast) {
+	public List<PersonDTO> getCrew() {
+		return crew;
+	}
+
+	public void setCrew(List<PersonDTO> crew) {
+		this.crew = crew;
+	}
+
+	public CreditsDTO(List<PersonDTO> cast, List<PersonDTO> crew) {
 		super();
 		this.cast = cast;
+		this.crew = crew;
 	}
 
 	public CreditsDTO() {

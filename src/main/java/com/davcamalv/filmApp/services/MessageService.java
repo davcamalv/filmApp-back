@@ -1,5 +1,6 @@
 package com.davcamalv.filmApp.services;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.ParseException;
@@ -202,6 +203,31 @@ public class MessageService {
 		return createOptionMessage("¿A cuál de los siguientes resultados se refiere?", "", options);
 	}
 
+	protected MessageDTO getPeopleSearches(MessageResponse response, String userInput) throws UnsupportedEncodingException {
+		Map<String, String> parameters = getParameters(response, userInput);
+		String name = parameters.get(USER_INPUT);
+		List<Option> options;
+		List<PersonDTO> searches = TMDBService.searchPeople(name);
+		if (searches.isEmpty()) {
+			return getMessageError("Disculpa, no he encontrado ningún resultado");
+		} else {
+
+			options = searches.stream()
+					.map(x -> new Option(x.getName(), String.valueOf(x.getId()),
+							x.getProfile_path() != null && !"".equals(x.getProfile_path())
+									? Constants.TMBD_IMAGE_BASE_URL + x.getProfile_path()
+									: null))
+					.collect(Collectors.toList());
+		}
+		return createOptionMessage("¿A cuál de los siguientes resultados se refiere?", "", options);
+	}
+	
+	protected MessageDTO getPerson(MessageResponse response, String userInput) {
+		Map<String, String> parameters = getParameters(response, userInput);
+		String res = getPersonMessage(TMDBService.getPersonByID(Integer.parseInt(parameters.get(USER_INPUT))));
+		return new MessageDTO(res, SenderType.server.name(), false, null);
+	}
+	
 	protected MessageDTO getFilteredSearches(MessageResponse response, String userInput) {
 		Map<String, String> parameters = getParameters(response, userInput);
 		List<Option> options;
@@ -238,9 +264,47 @@ public class MessageService {
 				.getByJustWatchUrl(parameters.get(Constants.URL_ACTUAL));
 		if (mediaContent.isPresent() && mediaContent.get().getImdbId() != null) {
 			MediaContent mediaContentValue = mediaContent.get();
-			res = getActorsMessage(TMDBService.getCastByMediaContent(mediaContentValue), mediaContentValue);
+			res = getActorsMessage(TMDBService.getCastByMediaContent(mediaContentValue).getCast(), mediaContentValue);
 		}
 		return new MessageDTO(res, SenderType.server.name(), false, null);
+	}
+
+	protected MessageDTO getDirector(MessageResponse response, String userInput) {
+		Map<String, String> parameters = getParameters(response, userInput);
+		String res = "Lo siento no he encontrado el director";
+		justWatchService.getMediaContent(parameters.get(Constants.URL_ACTUAL));
+		Optional<MediaContent> mediaContent = mediaContentService
+				.getByJustWatchUrl(parameters.get(Constants.URL_ACTUAL));
+		if (mediaContent.isPresent() && mediaContent.get().getImdbId() != null) {
+			MediaContent mediaContentValue = mediaContent.get();
+			res = getPersonMessage(
+					TMDBService.getDirector(TMDBService.getCastByMediaContent(mediaContentValue).getCrew()));
+		}
+		return new MessageDTO(res, SenderType.server.name(), false, null);
+	}
+
+	private String getPersonMessage(PersonDTO person) {
+		Map<String, String> htmlAttributes = new HashMap<>();
+		String img = null;
+		String title = null;
+		String description = null;
+		String textDiv = null;
+		String res = "Lo siento no he encontrado resultados";
+		if (person != null) {
+			htmlAttributes.put(Constants.SRC, Constants.TMBD_IMAGE_BASE_URL + person.getProfile_path());
+			img = Utils.createHtmlTag(Constants.IMG, "", htmlAttributes);
+			htmlAttributes.clear();
+			title = Utils.createHtmlTag(Constants.H1, person.getName(), htmlAttributes);
+			description = Utils
+					.createHtmlTag(Constants.P,
+							person.getBiography() != null && !"".equals(person.getBiography()) ? person.getBiography()
+									: "Lo siento, no he encontrado información relacionada con la biografía.",
+							htmlAttributes);
+			textDiv = Utils.createHtmlTag(Constants.DIV, title + Constants.BR + description, htmlAttributes);
+			htmlAttributes.put(Constants.CLASS, Constants.PERSON_PROFILE);
+			res = Utils.createHtmlTag(Constants.DIV, img + textDiv, htmlAttributes);
+		}
+		return res;
 	}
 
 	private String getActorsMessage(List<PersonDTO> castByMediaContent, MediaContent mediaContent) {
@@ -263,10 +327,12 @@ public class MessageService {
 
 				htmlAttributes.clear();
 				htmlAttributes.put(Constants.STYLE, Constants.BOLD);
-				information = Utils.createHtmlTag(Constants.P, personDTO.getName(), htmlAttributes) + Utils.createHtmlTag(Constants.P, "(" + personDTO.getCharacter() + ")", new HashMap<>());
+				information = Utils.createHtmlTag(Constants.P, personDTO.getName(), htmlAttributes)
+						+ Utils.createHtmlTag(Constants.P, "(" + personDTO.getCharacter() + ")", new HashMap<>());
 				htmlAttributes.clear();
 				htmlAttributes.put(Constants.CLASS, Constants.PERSON);
-				listDiv = listDiv + Utils.createHtmlTag(Constants.DIV, img + Constants.BR + information, htmlAttributes);
+				listDiv = listDiv
+						+ Utils.createHtmlTag(Constants.DIV, img + Constants.BR + information, htmlAttributes);
 			}
 			htmlAttributes.clear();
 			htmlAttributes.put(Constants.CLASS, Constants.PERSON_LIST);
