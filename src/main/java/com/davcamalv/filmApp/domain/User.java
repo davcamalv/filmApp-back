@@ -1,7 +1,10 @@
 package com.davcamalv.filmApp.domain;
 
+import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -42,7 +45,21 @@ public class User {
 	@Email
 	@Column(name = "email")
 	private String email;
+	
+	@Column(name = "avatar")
+	private String avatar;
 
+	@Column(name = "birth_date")
+	private Date birthDate;
+	
+	@ManyToMany
+	@JoinTable(name = "media_content_list", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "media_content_id"))
+	private List<MediaContent> toWatchList;
+	
+	@ManyToMany
+	@JoinTable(name = "genre_list", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
+	private List<Genre> genres;
+	
 	public User(String name, @NotNull String username, @NotNull String password, @Email String email) {
 		super();
 		this.name = name;
