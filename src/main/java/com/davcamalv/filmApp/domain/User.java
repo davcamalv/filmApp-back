@@ -48,7 +48,7 @@ public class User {
 	
 	@Column(name = "avatar")
 	private String avatar;
-
+	
 	@Column(name = "birth_date")
 	private Date birthDate;
 	
@@ -70,6 +70,38 @@ public class User {
 
 	public User() {
 		super();
+	}
+
+	public String getAvatar() {
+		return avatar;
+	}
+
+	public void setAvatar(String avatar) {
+		this.avatar = avatar;
+	}
+
+	public Date getBirthDate() {
+		return birthDate;
+	}
+
+	public void setBirthDate(Date birthDate) {
+		this.birthDate = birthDate;
+	}
+
+	public List<MediaContent> getToWatchList() {
+		return toWatchList;
+	}
+
+	public void setToWatchList(List<MediaContent> toWatchList) {
+		this.toWatchList = toWatchList;
+	}
+
+	public List<Genre> getGenres() {
+		return genres;
+	}
+
+	public void setGenres(List<Genre> genres) {
+		this.genres = genres;
 	}
 	
 	public Long getId() {
