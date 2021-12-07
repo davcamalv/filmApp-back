@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.davcamalv.filmApp.dtos.PaginationDTO;
 import com.davcamalv.filmApp.dtos.WatchListDTO;
-import com.davcamalv.filmApp.services.MediaContentService;
 import com.davcamalv.filmApp.services.UserService;
 
 @RestController
@@ -33,7 +32,7 @@ public class MediaContentController{
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 		log.info("POST /api/mediaContent/findByUser");
-		return userService.getToWatchListByUsername(userDetails.getUsername());
+		return userService.getToWatchListByUsername(paginationDTO.getPageNumber(), paginationDTO.getPageSize(), userDetails.getUsername());
 	}
 
 }

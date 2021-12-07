@@ -11,6 +11,9 @@ import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -88,10 +91,11 @@ public class UserService {
 		return getByUsername(SecurityContextHolder.getContext().getAuthentication().getName()).get();
 	}
 
-	public List<WatchListDTO> getToWatchListByUsername(String username) {
-		List<MediaContent> mediaContentList = userRepository.getToWatchListByUsername(username);
+	public List<WatchListDTO> getToWatchListByUsername(int pageNumber, int pageSize,  String username) {
+		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id").descending());
+		List<MediaContent> mediaContentList = userRepository.getToWatchListByUsername(pageable, username);
 		return mediaContentList.stream().map(x -> new WatchListDTO(x.getId(), x.getTitle(), x.getScore(),
-				x.getCreationDate(), x.getMediaType().name(), x.getPoster())).collect(Collectors.toList());
+				x.getCreationDate(), "MOVIE".equals(x.getMediaType().name())?"Película":"Serie", x.getPoster())).collect(Collectors.toList());
 	}
 
 	public ProfileDTO getProfile() {

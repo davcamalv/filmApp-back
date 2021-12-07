@@ -3,6 +3,7 @@ package com.davcamalv.filmApp.repositories;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -18,5 +19,5 @@ public interface UserRepository extends JpaRepository<User, Long>{
 	boolean existsByUsername(String username);
 	
 	@Query("select u.toWatchList from User u where u.username = ?1")
-	List<MediaContent> getToWatchListByUsername(String username);
+	List<MediaContent> getToWatchListByUsername(Pageable pageable, String username);
 }
