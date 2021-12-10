@@ -34,5 +34,11 @@ public class MediaContentController{
 		log.info("POST /api/mediaContent/findByUser");
 		return userService.getToWatchListByUsername(paginationDTO.getPageNumber(), paginationDTO.getPageSize(), userDetails.getUsername());
 	}
+	
+	@PostMapping("/deleteElementMediaContentList")
+	public void deleteElementMediaContentList(@RequestBody Long id){
+		log.info("POST /api/mediaContent/deleteElementMediaContentList");
+		userService.deleteElementMediaContentList(id);
+	}
 
 }

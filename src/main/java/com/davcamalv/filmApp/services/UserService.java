@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.davcamalv.filmApp.domain.Genre;
 import com.davcamalv.filmApp.domain.MediaContent;
 import com.davcamalv.filmApp.domain.Rol;
 import com.davcamalv.filmApp.domain.User;
@@ -43,6 +44,9 @@ public class UserService {
 
 	@Autowired
 	private RolService rolService;
+	
+	@Autowired
+	private GenreService genreService;
 
 	public Optional<User> findOne(Long userId) {
 		return userRepository.findById(userId);
@@ -110,6 +114,22 @@ public class UserService {
 				.collect(Collectors.toList());
 		return new ProfileDTO(user.getName(), user.getUsername(), user.getEmail(), user.getAvatar(),
 				birthDate, genres);
+	}
+	
+	public ProfileDTO addGenresToPrincipal(List<Long> ids) {
+		List<Genre> genres = genreService.findByIds(ids);
+		User user = getByUserLogged();
+		user.setGenres(genres);
+		userRepository.saveAndFlush(user);
+		return getProfile();
+	}
+
+	public void deleteElementMediaContentList(Long id) {
+		User user = getByUserLogged();
+		List<MediaContent> toWatchList = user.getToWatchList();
+		toWatchList = toWatchList.stream().filter(x -> !x.getId().equals(id)).collect(Collectors.toList());
+		user.setToWatchList(toWatchList);
+		userRepository.saveAndFlush(user);
 	}
 
 }
