@@ -26,6 +26,7 @@ import com.davcamalv.filmApp.domain.Rol;
 import com.davcamalv.filmApp.domain.User;
 import com.davcamalv.filmApp.dtos.NewUserDTO;
 import com.davcamalv.filmApp.dtos.ProfileDTO;
+import com.davcamalv.filmApp.dtos.ProfileDetailsDTO;
 import com.davcamalv.filmApp.dtos.ProfileGenresDTO;
 import com.davcamalv.filmApp.dtos.WatchListDTO;
 import com.davcamalv.filmApp.enums.RoleName;
@@ -130,6 +131,21 @@ public class UserService {
 		toWatchList = toWatchList.stream().filter(x -> !x.getId().equals(id)).collect(Collectors.toList());
 		user.setToWatchList(toWatchList);
 		userRepository.saveAndFlush(user);
+	}
+
+	public void changeAvatar(String avatar) {
+		User user = getByUserLogged();
+		user.setAvatar(avatar);
+		userRepository.saveAndFlush(user);
+	}
+
+	public ProfileDTO saveDetails(ProfileDetailsDTO profileDetailsDTO) {
+		User user = getByUserLogged();
+		user.setBirthDate(profileDetailsDTO.getBirthDate());
+		user.setName(profileDetailsDTO.getName());
+		user.setEmail(profileDetailsDTO.getEmail());
+		userRepository.saveAndFlush(user);
+		return getProfile();
 	}
 
 }

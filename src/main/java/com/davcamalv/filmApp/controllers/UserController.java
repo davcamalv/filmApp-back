@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.davcamalv.filmApp.dtos.ProfileDTO;
+import com.davcamalv.filmApp.dtos.ProfileDetailsDTO;
 import com.davcamalv.filmApp.services.UserService;
 
 @RestController
@@ -34,5 +35,17 @@ public class UserController{
 	public ProfileDTO addGenresToPrincipal(@RequestBody List<Long> ids){
 		log.info("POST /api/user/addGenresToPrincipal");
 		return userService.addGenresToPrincipal(ids);
+	}
+	
+	@PostMapping("/changeAvatar")
+	public void changeAvatar(@RequestBody String avatar){
+		log.info("POST /api/user/changeAvatar");
+		userService.changeAvatar(avatar);
+	}
+	
+	@PostMapping("/saveDetails")
+	public ProfileDTO saveDetails(@RequestBody ProfileDetailsDTO profileDetailsDTO){
+		log.info("POST /api/user/saveDetails");
+		return userService.saveDetails(profileDetailsDTO);
 	}
 }
