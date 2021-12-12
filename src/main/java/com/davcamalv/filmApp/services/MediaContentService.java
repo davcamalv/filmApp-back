@@ -1,6 +1,5 @@
 package com.davcamalv.filmApp.services;
 
-import java.util.List;
 import java.util.Optional;
 
 import javax.transaction.Transactional;
@@ -10,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.davcamalv.filmApp.domain.MediaContent;
-import com.davcamalv.filmApp.dtos.WatchListDTO;
 import com.davcamalv.filmApp.enums.MediaType;
 import com.davcamalv.filmApp.repositories.MediaContentRepository;
 
@@ -51,5 +49,9 @@ public class MediaContentService {
 			res = MediaType.SERIE;
 		}
 		return res;
+	}
+
+	public MediaContent findById(Long id) {
+		return mediaContentRepository.findById(id).get();
 	}
 }

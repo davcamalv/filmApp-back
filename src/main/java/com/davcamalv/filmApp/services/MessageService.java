@@ -202,8 +202,30 @@ public class MessageService {
 		}
 		return createOptionMessage("¿A cuál de los siguientes resultados se refiere?", "", options);
 	}
+	
+	protected MessageDTO selectMyList(MessageResponse response, String userInput) {
+		List<Option> options;
+		List<MediaContent> myList = userService.getByUserLogged().getToWatchList();
+		if (!myList.isEmpty()) {
+			options = myList.stream().map(x -> new Option(x.getTitle() + (x.getCreationDate() != null?" " + x.getCreationDate(): ""), String.valueOf(x.getId()), x.getPoster()))
+					.collect(Collectors.toList());
+		}else {
+			return getMessageError("Aún no tienes títulos en tu lista");
+		}
+		
+		return createOptionMessage("¿Cuál de los títulos quieres eliminar de tu lista?", "", options);
+	}
+	
+	protected MessageDTO deleteElementMediaContentList(MessageResponse response, String userInput) {
+		Map<String, String> parameters = getParameters(response, userInput);
+		Long id = Long.parseLong(parameters.get(USER_INPUT));
+		MediaContent mediaContent = mediaContentService.findById(id);
+		userService.deleteElementMediaContentList(id);
+		return new MessageDTO("He eliminado '" + mediaContent.getTitle() + "' de tu lista", SenderType.server.name(), false, null);
+	}
 
-	protected MessageDTO getPeopleSearches(MessageResponse response, String userInput) throws UnsupportedEncodingException {
+	protected MessageDTO getPeopleSearches(MessageResponse response, String userInput)
+			throws UnsupportedEncodingException {
 		Map<String, String> parameters = getParameters(response, userInput);
 		String name = parameters.get(USER_INPUT);
 		List<Option> options;
@@ -221,13 +243,13 @@ public class MessageService {
 		}
 		return createOptionMessage("¿A cuál de los siguientes resultados se refiere?", "", options);
 	}
-	
+
 	protected MessageDTO getPerson(MessageResponse response, String userInput) {
 		Map<String, String> parameters = getParameters(response, userInput);
 		String res = getPersonMessage(TMDBService.getPersonByID(Integer.parseInt(parameters.get(USER_INPUT))));
 		return new MessageDTO(res, SenderType.server.name(), false, null);
 	}
-	
+
 	protected MessageDTO getFilteredSearches(MessageResponse response, String userInput) {
 		Map<String, String> parameters = getParameters(response, userInput);
 		List<Option> options;
@@ -358,6 +380,60 @@ public class MessageService {
 			}
 		}
 		return new MessageDTO(res, SenderType.server.name(), false, null);
+	}
+
+	protected MessageDTO addToWatchList(MessageResponse response, String userInput) {
+		Map<String, String> parameters = getParameters(response, userInput);
+		String res = "¡Ya tiene ese título en la lista!";
+		justWatchService.getMediaContent(parameters.get(Constants.URL_ACTUAL));
+		Optional<MediaContent> mediaContent = mediaContentService
+				.getByJustWatchUrl(parameters.get(Constants.URL_ACTUAL));
+		if (!userService.existsOnToWatchList(mediaContent.get().getId())) {
+			userService.addToWatchList(mediaContent.get());
+			res = "He añadido '" + mediaContent.get().getTitle() + "' a su lista";
+		}
+		return new MessageDTO(res, SenderType.server.name(), false, null);
+	}
+
+	protected MessageDTO getMyList(MessageResponse response, String userInput) {
+		String res = "Aún no tienes títulos en tu lista";
+		List<MediaContent> myList = userService.getByUserLogged().getToWatchList();
+		if (!myList.isEmpty()) {
+			res = "Los títulos de su lista son los siguientes:" + Constants.BR;
+			res = res + createMyListMessage(myList);
+		}
+		return new MessageDTO(res, SenderType.server.name(), false, null);
+	}
+
+	private String createMyListMessage(List<MediaContent> myList) {
+		HashMap<String, String> htmlAttributes = new HashMap<>();
+		String res = "";
+		String img;
+		String information;
+		String listDiv = "";
+		for (MediaContent value : myList) {
+			htmlAttributes.clear();
+			if(value.getPoster() != null && !"".equals(value.getPoster())) {	
+				htmlAttributes.put(Constants.SRC, value.getPoster());
+			}else {
+				htmlAttributes.put(Constants.SRC, "/assets/defaults/mediaContent.jpg");
+			}
+
+			img = Utils.createHtmlTag(Constants.IMG, "", htmlAttributes);
+
+			htmlAttributes.clear();
+			htmlAttributes.put(Constants.STYLE, Constants.BOLD);
+			information = Utils.createHtmlTag(Constants.P, value.getTitle() + (value.getCreationDate() != null?" " + value.getCreationDate(): ""), htmlAttributes) + Utils.createHtmlTag(
+					Constants.P, "(" + (value.getMediaType().name().equals(MediaType.MOVIE.name()) ? "Película" : "Serie") + ")",
+					new HashMap<>());
+			htmlAttributes.clear();
+			htmlAttributes.put(Constants.CLASS, Constants.MY_LIST_ELEMENT);
+			listDiv = listDiv + Utils.createHtmlTag(Constants.DIV, img + Constants.BR + information, htmlAttributes);
+		}
+		htmlAttributes.clear();
+		htmlAttributes.put(Constants.CLASS, Constants.MY_LIST);
+		res = res + Utils.createHtmlTag(Constants.DIV, listDiv, htmlAttributes);
+		return res;
 	}
 
 	private String createYoutubeVideo(String urlTrailer) {

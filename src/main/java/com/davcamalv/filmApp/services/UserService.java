@@ -148,4 +148,16 @@ public class UserService {
 		return getProfile();
 	}
 
+	public boolean existsOnToWatchList(Long id) {
+		return userRepository.existsOnToWatchList(getByUserLogged().getId(), id);
+	}
+
+	public void addToWatchList(MediaContent mediaContent) {
+		User user = getByUserLogged();
+		List<MediaContent> toWatchList = user.getToWatchList();
+		toWatchList.add(mediaContent);
+		user.setToWatchList(toWatchList);
+		userRepository.saveAndFlush(user);
+	}
+
 }
