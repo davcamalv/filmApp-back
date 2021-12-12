@@ -20,4 +20,7 @@ public interface UserRepository extends JpaRepository<User, Long>{
 	
 	@Query("select u.toWatchList from User u where u.username = ?1")
 	List<MediaContent> getToWatchListByUsername(Pageable pageable, String username);
+
+	@Query("select count(*) > 0 from User u inner join u.toWatchList t where u.id = ?1 and t.id = ?2")
+	boolean existsOnToWatchList(Long idUser, Long id);
 }

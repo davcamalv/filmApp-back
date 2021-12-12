@@ -61,6 +61,8 @@ public class Constants {
 	public static final String FECHA_INICIAL = "fecha_inicial";
 	public static final String GENERO = "genero";
 	public static final String PERSON = "person";
+	public static final String MY_LIST_ELEMENT = "my-list-element";
+	public static final String MY_LIST = "my-list";
 	public static final String PERSON_LIST = "person-list";
 	public static final String PERSON_PROFILE = "person-profile";
 	public static final String PLATAFORMA = "plataforma";

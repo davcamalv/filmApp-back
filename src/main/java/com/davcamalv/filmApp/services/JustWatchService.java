@@ -235,8 +235,8 @@ public class JustWatchService {
 			List<WebElement> searches = webDriver.findElements(By.tagName("ion-row"));
 			for (WebElement search : searches) {
 				justWatchUrl = search.findElement(By.tagName("a")).getAttribute("href");
-				searchTitle = search.findElement(By.className("title-list-row__row__title")).getText();
-				year = search.findElement(By.className("title-list-row__row--muted")).getText();
+				searchTitle = search.findElement(By.className("title-list-row__row-header-title")).getText();
+				year = search.findElement(By.className("title-list-row__row-header-year")).getText();
 				List<WebElement> imgs = search.findElements(By.tagName("img"));
 				if (!imgs.isEmpty()) {
 					poster = imgs.get(0).getAttribute("src").replace("s166", "s718");
