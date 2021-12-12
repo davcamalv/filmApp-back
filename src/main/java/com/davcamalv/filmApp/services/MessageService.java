@@ -202,6 +202,27 @@ public class MessageService {
 		}
 		return createOptionMessage("¿A cuál de los siguientes resultados se refiere?", "", options);
 	}
+	
+	protected MessageDTO selectMyList(MessageResponse response, String userInput) {
+		List<Option> options;
+		List<MediaContent> myList = userService.getByUserLogged().getToWatchList();
+		if (!myList.isEmpty()) {
+			options = myList.stream().map(x -> new Option(x.getTitle() + (x.getCreationDate() != null?" " + x.getCreationDate(): ""), String.valueOf(x.getId()), x.getPoster()))
+					.collect(Collectors.toList());
+		}else {
+			return getMessageError("Aún no tienes títulos en tu lista");
+		}
+		
+		return createOptionMessage("¿Cuál de los títulos quieres eliminar de tu lista?", "", options);
+	}
+	
+	protected MessageDTO deleteElementMediaContentList(MessageResponse response, String userInput) {
+		Map<String, String> parameters = getParameters(response, userInput);
+		Long id = Long.parseLong(parameters.get(USER_INPUT));
+		MediaContent mediaContent = mediaContentService.findById(id);
+		userService.deleteElementMediaContentList(id);
+		return new MessageDTO("He eliminado '" + mediaContent.getTitle() + "' de tu lista", SenderType.server.name(), false, null);
+	}
 
 	protected MessageDTO getPeopleSearches(MessageResponse response, String userInput)
 			throws UnsupportedEncodingException {
@@ -369,7 +390,7 @@ public class MessageService {
 				.getByJustWatchUrl(parameters.get(Constants.URL_ACTUAL));
 		if (!userService.existsOnToWatchList(mediaContent.get().getId())) {
 			userService.addToWatchList(mediaContent.get());
-			res = "He añadido " + mediaContent.get().getTitle() + " a su lista";
+			res = "He añadido '" + mediaContent.get().getTitle() + "' a su lista";
 		}
 		return new MessageDTO(res, SenderType.server.name(), false, null);
 	}
@@ -402,7 +423,7 @@ public class MessageService {
 
 			htmlAttributes.clear();
 			htmlAttributes.put(Constants.STYLE, Constants.BOLD);
-			information = Utils.createHtmlTag(Constants.P, value.getTitle() + " " + value.getCreationDate(), htmlAttributes) + Utils.createHtmlTag(
+			information = Utils.createHtmlTag(Constants.P, value.getTitle() + (value.getCreationDate() != null?" " + value.getCreationDate(): ""), htmlAttributes) + Utils.createHtmlTag(
 					Constants.P, "(" + (value.getMediaType().name().equals(MediaType.MOVIE.name()) ? "Película" : "Serie") + ")",
 					new HashMap<>());
 			htmlAttributes.clear();

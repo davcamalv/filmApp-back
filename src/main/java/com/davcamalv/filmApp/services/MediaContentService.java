@@ -50,4 +50,8 @@ public class MediaContentService {
 		}
 		return res;
 	}
+
+	public MediaContent findById(Long id) {
+		return mediaContentRepository.findById(id).get();
+	}
 }
