@@ -2,16 +2,19 @@ version: 2.1
 
 orbs:
   heroku: circleci/heroku@1.2
+  browser-tools: circleci/browser-tools@1.2.3
 
 jobs:
   build-and-test:  
     docker:
       - image: cimg/openjdk:8.0
     steps:
+      - browser-tools/install-chrome
+      - browser-tools/install-chromedriver
       - checkout
       - run:
           name: Build
-          command: mvn -B -DskipTests clean package -P pro
+          command: mvn -B clean package -P pro
 
 workflows:
   sample:
