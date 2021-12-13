@@ -19,7 +19,11 @@ jobs:
 workflows:
   sample:
     jobs:
-      - build-and-test
+      - build-and-test:
+          filters:
+            branches:
+              only: 
+              - develop
       - heroku/deploy-via-git:
           force: true
           requires:
