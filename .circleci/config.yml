@@ -11,7 +11,7 @@ jobs:
       - checkout
       - run:
           name: Build
-          command: mvn -B -DskipTests clean package -P pro
+          command: mvn -B clean package -P pro
 
 workflows:
   sample:
