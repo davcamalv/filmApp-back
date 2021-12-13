@@ -7,8 +7,10 @@ jobs:
   build-and-test:  
     docker:
       - image: cimg/openjdk:8.0
-      - image: selenium/standalone-chrome:3.11.0
+      - image: cimg/node:13.12-browser
     steps:
+      - browser-tools/install-chrome
+      - browser-tools/install-chromedriver
       - checkout
       - run:
           name: Build
