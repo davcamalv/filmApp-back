@@ -31,7 +31,7 @@ public class JustWatchServiceTest {
 	@Test
 	public void getSearchesTest() {
 		List<SearchDTO> list = justWatchService.getSearches("Shrek");
-		assertFalse(!list.isEmpty());
+		assertFalse(list.isEmpty());
 		assertTrue(list.stream().anyMatch(
 				x -> x.getImage() != null && x.getTitle() != null && x.getUrl() != null && x.getYear() != null));
 	}
