@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   heroku: circleci/heroku@1.2
-  browser-tools: circleci/browser-tools@x.y
+  browser-tools: circleci/browser-tools@1.2.3
 
 jobs:
   build-and-test:  
