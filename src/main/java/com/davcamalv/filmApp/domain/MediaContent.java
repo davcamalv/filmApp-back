@@ -30,7 +30,7 @@ public class MediaContent {
     @Column(name = "title")
 	private String title;
 	
-    @Column(name = "description")
+    @Column(name = "description", length = 10000)
 	private String description;
 	
     @NotNull
@@ -42,13 +42,13 @@ public class MediaContent {
 	private String creationDate;
 	
 	@NotNull
-	@Column(name = "just_watch_url")
+	@Column(name = "just_watch_url", length = 1000)
 	private String justWatchUrl;
 	
 	@Column(name = "imdb_id", unique = true)
 	private String imdbId;
 	
-	@Column(name = "poster")
+	@Column(name = "poster", length = 1000)
 	private String poster;
 	
 	@Column(name = "score")

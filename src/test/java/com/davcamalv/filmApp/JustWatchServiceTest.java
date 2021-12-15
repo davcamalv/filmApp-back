@@ -1,22 +1,30 @@
 package com.davcamalv.filmApp;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.davcamalv.filmApp.domain.MediaContent;
+import com.davcamalv.filmApp.dtos.MediaContentDTO;
 import com.davcamalv.filmApp.dtos.SearchDTO;
+import com.davcamalv.filmApp.enums.MediaType;
 import com.davcamalv.filmApp.services.JustWatchService;
+import com.davcamalv.filmApp.services.MediaContentService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -27,6 +35,8 @@ public class JustWatchServiceTest {
 	@Autowired
 	JustWatchService justWatchService;
 
+	@Autowired
+	MediaContentService mediaContentService;
 
 	@Test
 	public void getSearchesTest() {
@@ -51,4 +61,45 @@ public class JustWatchServiceTest {
 		assertTrue(list.stream().anyMatch(
 				x -> x.getImage() != null && x.getTitle() != null && x.getUrl() != null));
 	}
+	
+	@Test
+	public void getMediaContent1Test() {
+		mediaContentService.save(new MediaContent("Shrek", null, MediaType.MOVIE, "(2001)", "https://www.justwatch.com/es/pelicula/shrek", null, "https://images.justwatch.com/poster/175566090/s718", null, null, null, null));
+		MediaContentDTO mediaContent = justWatchService.getMediaContent("https://www.justwatch.com/es/pelicula/shrek");
+		assertNotEquals(mediaContent.getTitle(), null);
+		assertNotEquals(mediaContent.getDescription(), null);
+		assertNotEquals(mediaContent.getCreationDate(), null);
+		assertNotEquals(mediaContent.getPoster(), null);
+		assertNotEquals(mediaContent.getScore(), null);
+		assertFalse(mediaContent.getBuy().isEmpty());
+		assertFalse(mediaContent.getRent().isEmpty());
+		assertFalse(mediaContent.getStream().isEmpty());
+	}
+	
+	@Test
+	public void getMediaContent2Test() {
+		mediaContentService.save(new MediaContent("Shrek", null, MediaType.MOVIE, "(2001)", "https://www.justwatch.com/es/pelicula/shrek", null, "https://images.justwatch.com/poster/175566090/s718", null, null, null, null));
+		MediaContentDTO mediaContent = justWatchService.getMediaContent("https://www.justwatch.com/es/pelicula/shrek");
+		assertNotEquals(mediaContent.getTitle(), null);
+		assertNotEquals(mediaContent.getDescription(), null);
+		assertNotEquals(mediaContent.getCreationDate(), null);
+		assertNotEquals(mediaContent.getPoster(), null);
+		assertNotEquals(mediaContent.getScore(), null);
+		assertFalse(mediaContent.getBuy().isEmpty());
+		assertFalse(mediaContent.getRent().isEmpty());
+		assertFalse(mediaContent.getStream().isEmpty());
+	}
+	
+	@Test
+	public void getMediaContent3Test() {
+		mediaContentService.save(new MediaContent("NCIS: Nueva Orleans", null, MediaType.SERIE, null, "https://www.justwatch.com/es/serie/ncis-nueva-orleans", null, "https://images.justwatch.com/poster/237679839/s718", null, null, null, null));
+		MediaContentDTO mediaContent = justWatchService.getMediaContent("https://www.justwatch.com/es/serie/ncis-nueva-orleans");
+		assertNotEquals(mediaContent.getTitle(), null);
+		assertNotEquals(mediaContent.getDescription(), null);
+		assertNotEquals(mediaContent.getCreationDate(), null);
+		assertNotEquals(mediaContent.getPoster(), null);
+		assertNotEquals(mediaContent.getScore(), null);
+		assertFalse(mediaContent.getStream().isEmpty());
+	}
+
 }

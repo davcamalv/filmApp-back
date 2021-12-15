@@ -18,13 +18,13 @@ public class Platform {
 	private Long id;
 	
 	@NotNull
-	@Column(name = "name")
+	@Column(name = "name", length = 1000)
 	private String name;
 	
-	@Column(name = "logo")
+	@Column(name = "logo", length = 1000)
 	private String logo;
 	
-	@Column(name = "short_name")
+	@Column(name = "short_name", length = 1000)
 	private String shortName;
 
 	public Platform(@NotNull String name, String logo, String shortName) {
