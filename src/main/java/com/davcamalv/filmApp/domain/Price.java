@@ -46,7 +46,7 @@ public class Price {
 	private Platform platform;
 
 	@NotNull
-	@Column(name = "url")
+	@Column(name = "url", length = 3000)
 	private String url;
 	
 	public Price(@NotNull String cost, @NotNull PriceType priceType, MediaContent mediaContent, Platform platform, String url) {
