@@ -28,4 +28,5 @@ INSERT INTO genre (id, name, short_name, tmdb_id) VALUES (6, 'Drama', 'drm', 18)
 INSERT INTO genre (id, name, short_name, tmdb_id) VALUES (7, 'Acción & Aventura', 'act', 10759);
 
 INSERT INTO configuration (id, property, value) VALUES (1, 'tmdb.apikey', 'ff482dee982fe1d0541efec24c60d43c');
+INSERT INTO media_content (id, title, description, media_type, creation_date, just_watch_url, imdb_id, poster, score, search_performed, tmdb_id) VALUES (9174, 'El club de la lucha', 'Un joven sin ilusiones lucha contra su insomnio, consecuencia quizás de su hastío por su gris y rutinaria vida. En un viaje en avión conoce a Tyler Durden, un carismático vendedor de jabón que sostiene una filosofía muy particular: el perfeccionismo es cosa de gentes débiles; en cambio, la autodestrucción es lo único que hace que realmente la vida merezca la pena. Ambos deciden entonces formar un club secreto de lucha donde descargar sus frustaciones y su ira que tendrá un éxito arrollador.', 'MOVIE', '(1999)', 'https://www.justwatch.com/es/pelicula/el-club-de-la-lucha', 'tt0137523', 'https://images.justwatch.com/poster/66105154/s718', '8.8 (1m)', 1, 550);
 
