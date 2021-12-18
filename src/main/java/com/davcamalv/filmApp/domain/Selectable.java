@@ -24,12 +24,12 @@ public class Selectable {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 	
-	@Column(name = "title")
+	@Column(name = "title", length = 3000)
 	@NotNull
 	private String title;
 	
 	@NotNull
-	@Column(name = "description")
+	@Column(name = "description", length = 3000)
 	private String description;
 	
 	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
