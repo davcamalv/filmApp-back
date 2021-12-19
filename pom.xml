@@ -141,13 +141,17 @@
             	<activeByDefault>true</activeByDefault> 
             </activation> 
             <properties>
-                <activatedProperties>dev</activatedProperties>             
+                <activatedProperties>dev</activatedProperties>
+                <sonar.organization>davcamalv</sonar.organization>
+ 				<sonar.host.url>https://sonarcloud.io</sonar.host.url>             
             </properties>
         </profile>
         <profile>
             <id>pro</id>
             <properties>
-                <activatedProperties>pro</activatedProperties>                
+                <activatedProperties>pro</activatedProperties>   
+                <sonar.organization>davcamalv</sonar.organization>
+ 				<sonar.host.url>https://sonarcloud.io</sonar.host.url>             
             </properties>
         </profile>
     </profiles> 
