@@ -27,7 +27,7 @@ public class Message {
     private Long id;
 	
 	@NotNull
-	@Column(name = "message")
+	@Column(name = "message", length=65735)
 	private String message;
 	
 	@NotNull
