@@ -5,7 +5,7 @@ orbs:
   browser-tools: circleci/browser-tools@1.2.3
 
 jobs:
-  sonar-and-tests:
+  sonar:
     docker:
       - image: circleci/openjdk:11-jdk
     steps:
@@ -15,6 +15,22 @@ jobs:
       - run:
           name: Analyze on SonarCloud
           command: mvn verify sonar:sonar -Dsonar.projectKey=davcamalv_filmApp-back
+  check_sonar_quality_gate:
+    docker:
+      - image: circleci/openjdk:11-jdk
+    steps:
+      - checkout
+      - run:
+          name: Checking Sonar quality gate (develop and master)
+          command: |
+            SONAR_PROJECT_STATUS=$(curl -s -X GET "https://sonarcloud.io/api/qualitygates/project_status?projectKey=davcamalv_filmApp-back&branch=develop" | jq ".projectStatus.status")
+            echo $SONAR_PROJECT_STATUS
+            if [[ $SONAR_PROJECT_STATUS != "\"OK\"" ]]
+            then
+              echo -e "ERROR: SONAR QUALITY GATE NOT PASSED. STATUS "$SONAR_PROJECT_STATUS
+              false
+            else echo -e "SONAR QUALITY GATE PASSED. STATUS "$SONAR_PROJECT_STATUS
+            fi
   build:  
     docker:
       - image: cimg/openjdk:8.0
@@ -27,14 +43,25 @@ jobs:
 workflows:
   sample:
     jobs:
-      - sonar-and-test:
+      - sonar:
           context: SonarCloud
           filters:
             branches:
               only: 
               - develop
               - master
+      - check_sonar_quality_gate:
+          context: SonarCloud
+          requires:
+              - sonar
+          filters:
+            branches:
+              only: 
+              - develop
+              - master
       - build:
+          requires:
+            - check_sonar_quality_gate
           filters:
             branches:
               only: 
@@ -43,7 +70,7 @@ workflows:
       - heroku/deploy-via-git:
           force: true
           requires:
-            - build-and-test
+            - build
           filters:
             branches:
               only: 
