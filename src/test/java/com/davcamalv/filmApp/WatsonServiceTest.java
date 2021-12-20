@@ -45,7 +45,6 @@ public class WatsonServiceTest {
 		User user = userService.getByUserLogged();
 		MessageDTO response = watsonService.sendMessage(user.getId(), message);
 		assertEquals(response.getSender(), SenderType.server.name());
-		assertNotEquals(response.getMessage(), 0);
 		assertNotEquals(response.getMessage(), "Disculpe, actualmente no tengo implementada esa funcionalidad");
 	}
 	
@@ -58,7 +57,6 @@ public class WatsonServiceTest {
 		User user = userService.getByUserLogged();
 		MessageDTO response = watsonService.sendMessage(user.getId(), message);
 		assertEquals(response.getSender(), SenderType.server.name());
-		assertNotEquals(response.getMessage(), 0);
 		assertNotEquals(response.getMessage(), "Disculpe, actualmente no tengo implementada esa funcionalidad");
 		assertTrue(response.getSpecialKeyboard());
 	}
