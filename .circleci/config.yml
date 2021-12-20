@@ -24,7 +24,6 @@ jobs:
           name: Checking Sonar quality gate (develop and master)
           command: |
             SONAR_PROJECT_STATUS=$(curl -s -X GET "https://sonarcloud.io/api/qualitygates/project_status?projectKey=davcamalv_filmApp-back&branch=develop" | jq ".projectStatus.status")
-            echo $SONAR_PROJECT_STATUS
             if [[ $SONAR_PROJECT_STATUS != "\"OK\"" ]]
             then
               echo -e "ERROR: SONAR QUALITY GATE NOT PASSED. STATUS "$SONAR_PROJECT_STATUS
