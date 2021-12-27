@@ -4,7 +4,7 @@ import java.util.Date;
 
 public class ReviewDTO {
 	
-	private String author;
+	private AuthorDetailsDTO author_details;
 	
 	private String content;
 	
@@ -12,12 +12,12 @@ public class ReviewDTO {
 	
 	private Integer rating;
 
-	public String getAuthor() {
-		return author;
+	public AuthorDetailsDTO getAuthor_details() {
+		return author_details;
 	}
 
-	public void setAuthor(String author) {
-		this.author = author;
+	public void setAuthor_details(AuthorDetailsDTO author_details) {
+		this.author_details = author_details;
 	}
 
 	public String getContent() {
@@ -44,9 +44,9 @@ public class ReviewDTO {
 		this.rating = rating;
 	}
 
-	public ReviewDTO(String author, String content, Date created_at, Integer rating) {
+	public ReviewDTO(AuthorDetailsDTO author_details, String content, Date created_at, Integer rating) {
 		super();
-		this.author = author;
+		this.author_details = author_details;
 		this.content = content;
 		this.created_at = created_at;
 		this.rating = rating;

@@ -75,7 +75,7 @@ public class TMDBServiceTest {
 		MediaContent mediaContent = mediaContentService.findById(9174l);
 		List<ReviewDTO> reviews = TMDBService.getReviewsByMediaContent(mediaContent).getResults();
 		assertFalse(reviews.isEmpty());
-		assertTrue(reviews.get(0).getAuthor() != null && !"".equals(reviews.get(0).getAuthor())
+		assertTrue(reviews.get(0).getAuthor_details() != null && !"".equals(reviews.get(0).getAuthor_details().getUsername())
 				&& reviews.get(0).getContent() != null && !"".equals(reviews.get(0).getContent()));
 
 	}
