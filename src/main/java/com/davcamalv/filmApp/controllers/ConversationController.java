@@ -34,7 +34,7 @@ public class ConversationController{
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 		User user = userService.getByUsername(userDetails.getUsername()).get();
-		log.info("POST /api/session/sendMessage");
+		log.info("POST /api/conversation/sendMessage");
 		return watsonService.sendMessage(user.getId(), message);
 	}
 }

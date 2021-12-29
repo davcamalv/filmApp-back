@@ -97,13 +97,13 @@ public class MessageService {
 
 	public Message saveUserMessage(MessageDTO messageDTO) {
 		Message message = new Message(Utils.makeSafeMessage(messageDTO.getMessage()),
-				SenderType.valueOf(messageDTO.getSender()), userService.getByUserLogged(), false, null);
+				SenderType.valueOf(messageDTO.getSender()), userService.getByUserLogged(), false, null, false);
 		return messageRepository.save(message);
 	}
 
 	public Message save(MessageDTO messageDTO, Selectable selectable) {
 		Message message = new Message(messageDTO.getMessage(), SenderType.valueOf(messageDTO.getSender()),
-				userService.getByUserLogged(), messageDTO.getSpecialKeyboard(), selectable);
+				userService.getByUserLogged(), messageDTO.getSpecialKeyboard(), selectable, messageDTO.getFullWidth());
 		return messageRepository.save(message);
 	}
 
@@ -777,7 +777,7 @@ public class MessageService {
 				avatarUrl = "/assets/avatars/1.png";
 			}else if(avatarUrl.startsWith("/https:")) {
 				avatarUrl = avatarUrl.substring(1);
-			}else {
+			}else if(reviewDTO.getRating() == null){
 				avatarUrl = Constants.TMBD_IMAGE_BASE_URL + avatarUrl;
 			}
 			htmlAttributes.put(Constants.SRC, avatarUrl);
@@ -789,7 +789,9 @@ public class MessageService {
 			date = Utils.createHtmlTag(Constants.P, new SimpleDateFormat("dd/MM/yyyy").format(reviewDTO.getCreated_at()), htmlAttributes);
 			
 			if(reviewDTO.getRating() != null) {
-				stars = getRating(reviewDTO.getRating());
+				htmlAttributes.clear();
+				htmlAttributes.put(Constants.SRC, "/assets/ratings/" + reviewDTO.getRating() + "stars.png");
+				stars = Utils.createHtmlTag(Constants.IMG, "", htmlAttributes);
 				htmlAttributes.clear();
 				htmlAttributes.put(Constants.CLASS, Constants.REVIEW_RATING);
 				ratingDiv = Utils.createHtmlTag(Constants.DIV, stars, htmlAttributes);
@@ -807,24 +809,4 @@ public class MessageService {
 		return new MessageDTO(html, SenderType.server.name(), false, null, true);
 	}
 	
-	private String getRating(Integer i) {
-		Map<String, String> htmlAttributes = new HashMap<>();
-		String res = "";
-		Integer emptyStars = 5;
-		while (i > 0) {
-			htmlAttributes.clear();
-			htmlAttributes.put(Constants.SRC, "/assets/star.png");
-			res = res + Utils.createHtmlTag(Constants.IMG, "", htmlAttributes);
-			i--;
-			emptyStars--;
-		}
-		
-		while (emptyStars > 0) {
-			htmlAttributes.clear();
-			htmlAttributes.put(Constants.SRC, "/assets/star_border.png");
-			res = res + Utils.createHtmlTag(Constants.IMG, "", htmlAttributes);
-			emptyStars--;
-		}
-		return res;
-	}
 }
