@@ -29,11 +29,18 @@ public class ReviewService {
 	private ReviewRepository reviewRepository;
 
 	public Review save(Review review) {
+		if(Boolean.TRUE.equals(review.getDraft())) {
+			deleteByMediaContentAndUserAndDraft(review.getMediaContent(), review.getUser(), true);
+		}
 		return reviewRepository.save(review);
+	}
+	
+	public void deleteByMediaContentAndUserAndDraft(MediaContent mediaContent, User user, Boolean draft) {
+		reviewRepository.deleteByMediaContentAndUserAndDraft(mediaContent, user, draft);
 	}
 
 	public List<ReviewDTO> findByMediaContent(MediaContent mediaContent) {
-		List<Review> reviews = reviewRepository.findByMediaContent(mediaContent);
+		List<Review> reviews = reviewRepository.findByMediaContentAndDraft(mediaContent, false);
 		return reviews.stream()
 				.map(x -> new ReviewDTO(new AuthorDetailsDTO(x.getUser().getUsername(), x.getUser().getAvatar()),
 						x.getContent(), x.getCreatedAt(), x.getRating()))
@@ -42,7 +49,7 @@ public class ReviewService {
 
 	public List<ReviewProfileDTO> findByUser(User user, int pageNumber, int pageSize) {
 		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id").descending());
-		List<Review> reviews = reviewRepository.findByUser(user, pageable);
+		List<Review> reviews = reviewRepository.findByUserAndDraft(user, false, pageable);
 		return reviews.stream()
 				.map(x -> new ReviewProfileDTO(x.getId(),
 						new MediaContentReviewDTO(x.getMediaContent().getTitle(),
@@ -55,4 +62,24 @@ public class ReviewService {
 	public void delete(Long id) {
 		reviewRepository.deleteById(id);
 	}
+
+	public boolean existsByMediaContentAndUserAndDraft(MediaContent mediaContent, User user, Boolean draft) {
+		return reviewRepository.existsByMediaContentAndUserAndDraft(mediaContent, user, draft);
+	}
+
+	public void updateDraft(MediaContent mediaContent, User user) {
+		Review review;
+		List<Review> reviews = findByMediaContentAndUserAndDraft(mediaContent, user, true);
+		if(!reviews.isEmpty()) {
+			deleteByMediaContentAndUserAndDraft(mediaContent, user, false);
+			review = reviews.get(0);
+			review.setDraft(false);
+			save(review);
+		}
+	}
+
+	public List<Review> findByMediaContentAndUserAndDraft(MediaContent mediaContent, User user, Boolean draft) {
+		return reviewRepository.findByMediaContentAndUserAndDraft(mediaContent, user, draft);
+	}
+
 }

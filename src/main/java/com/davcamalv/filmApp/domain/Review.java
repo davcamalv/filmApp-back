@@ -45,6 +45,9 @@ public class Review {
 	@ManyToOne
 	@JoinColumn(name = "media_content_id", nullable = false)
 	private MediaContent mediaContent;
+	
+	@Column(name = "draft")
+	private Boolean draft;
 
 	public Long getId() {
 		return id;
@@ -94,15 +97,23 @@ public class Review {
 		this.mediaContent = mediaContent;
 	}
 
-	public Review(@NotNull Long id, Date createdAt, String content, Integer rating, User user,
-			MediaContent mediaContent) {
+	public Boolean getDraft() {
+		return draft;
+	}
+
+	public void setDraft(Boolean draft) {
+		this.draft = draft;
+	}
+
+	public Review(Date createdAt, String content, Integer rating, User user,
+			MediaContent mediaContent, Boolean draft) {
 		super();
-		this.id = id;
 		this.createdAt = createdAt;
 		this.content = content;
 		this.rating = rating;
 		this.user = user;
 		this.mediaContent = mediaContent;
+		this.draft = draft;
 	}
 
 	public Review() {

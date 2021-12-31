@@ -13,8 +13,14 @@ import com.davcamalv.filmApp.domain.User;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long>{
 
-	List<Review> findByMediaContent(MediaContent mediaContent);
+	List<Review> findByMediaContentAndDraft(MediaContent mediaContent, boolean draft);
 
-	List<Review> findByUser(User user, Pageable pageable);
+	List<Review> findByUserAndDraft(User user, boolean draft, Pageable pageable);
+
+	boolean existsByMediaContentAndUserAndDraft(MediaContent mediaContent, User user, boolean b);
+
+	void deleteByMediaContentAndUserAndDraft(MediaContent mediaContent, User user, Boolean draft);
+
+	List<Review> findByMediaContentAndUserAndDraft(MediaContent mediaContent, User user, Boolean draft);
 
 }

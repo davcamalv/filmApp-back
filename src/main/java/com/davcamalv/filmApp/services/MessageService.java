@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,7 @@ import com.davcamalv.filmApp.domain.Message;
 import com.davcamalv.filmApp.domain.Option;
 import com.davcamalv.filmApp.domain.Platform;
 import com.davcamalv.filmApp.domain.Premiere;
+import com.davcamalv.filmApp.domain.Review;
 import com.davcamalv.filmApp.domain.Selectable;
 import com.davcamalv.filmApp.domain.User;
 import com.davcamalv.filmApp.dtos.MediaContentDTO;
@@ -50,6 +52,8 @@ import com.ibm.watson.assistant.v2.model.RuntimeResponseGeneric;
 
 @Service
 public class MessageService {
+	
+	protected final Logger log = Logger.getLogger(MessageService.class);
 
 	private static final String USER_INPUT = "userInput";
 
@@ -805,8 +809,53 @@ public class MessageService {
 		}
 		htmlAttributes.clear();
 		htmlAttributes.put(Constants.CLASS, Constants.REVIEW_LIST);
-		html = Utils.createHtmlTag(Constants.DIV, reviewDivs, new HashMap<>());
+		String title = Utils.createHtmlTag(Constants.P, "He encontrado las siguientes opiniones: ", new HashMap<>());
+		html = Utils.createHtmlTag(Constants.DIV, title + Constants.BR + reviewDivs, new HashMap<>());
 		return new MessageDTO(html, SenderType.server.name(), false, null, true);
+	}
+	
+	protected MessageDTO saveReview(MessageResponse response, String userInput){
+		Map<String, String> parameters = getParameters(response, userInput);
+		Optional<MediaContent> mediaContentOptional = mediaContentService.getByJustWatchUrl(parameters.get(Constants.URL_ACTUAL));
+		User user = userService.getByUserLogged();
+		MessageDTO res = new MessageDTO(); 
+		try {
+			if(mediaContentOptional.isPresent()) {
+				MediaContent mediaContent = mediaContentOptional.get();
+				if(reviewService.existsByMediaContentAndUserAndDraft(mediaContent, user, false)) {
+					reviewService.save(new Review(new Date(), userInput, Integer.valueOf(parameters.get("rating").substring(0, 1)), user, mediaContent, true));
+					List<Option> options = new ArrayList<Option>();
+					options.add(new Option("Sobreescribir", "Sobreescribir", null));
+					options.add(new Option("No sobreescribir", "No sobreescribir", null));
+					res = createOptionMessage("Ya existe una valoración suya para este título", " ¿quiere sobreescribirla?", options);
+				} else {
+						reviewService.save(new Review(new Date(), userInput, Integer.valueOf(parameters.get("rating").substring(0, 1)), user, mediaContent, false));
+						res = new MessageDTO("Se ha guardado correctamente su opinión", SenderType.server.name(), false, null, false);
+				}
+			}
+		} catch (Exception e){
+			log.error("error al guardar la review", e);
+			res = getMessageError("Disculpe, ha ocurrido un error al guardar la opinión");
+		}
+		return res;
+	}
+	
+	protected MessageDTO overwriteReview(MessageResponse response, String userInput){
+		Map<String, String> parameters = getParameters(response, userInput);
+		Optional<MediaContent> mediaContentOptional = mediaContentService.getByJustWatchUrl(parameters.get(Constants.URL_ACTUAL));
+		User user = userService.getByUserLogged();
+		MessageDTO res = new MessageDTO();
+		try {
+			if(mediaContentOptional.isPresent()) {
+				MediaContent mediaContent = mediaContentOptional.get();
+				reviewService.updateDraft(mediaContent, user);
+				res = new MessageDTO("Se ha modificado correctamente su opinión", SenderType.server.name(), false, null, false);
+			}
+		} catch (Exception e){
+			log.error("error al modificar la review", e);
+			res = getMessageError("Disculpe, ha ocurrido un error al modificar la opinión");
+		}
+		return res;
 	}
 	
 }
