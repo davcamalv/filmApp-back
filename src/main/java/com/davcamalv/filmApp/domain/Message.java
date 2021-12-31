@@ -48,17 +48,22 @@ public class Message {
 	@JoinColumn(name = "selectable_id", nullable = true)
     private Selectable selectable;
 	
+	@NotNull
+	@Column(name = "full_width")
+	private Boolean fullWidth;
+	
 	public Message() {
 		super();
 	}
 
-	public Message(String message, SenderType sender, User user, boolean specialKeyboard, Selectable selectable) {
+	public Message(String message, SenderType sender, User user, boolean specialKeyboard, Selectable selectable, Boolean fullWidth) {
 		super();
 		this.message = message;
 		this.sender = sender;
 		this.user = user;
 		this.specialKeyboard = specialKeyboard;
 		this.selectable = selectable;
+		this.fullWidth = fullWidth;
 	}
 
 	public Long getId() {
@@ -107,6 +112,14 @@ public class Message {
 
 	public void setSelectable(Selectable selectable) {
 		this.selectable = selectable;
+	}
+
+	public Boolean getFullWidth() {
+		return fullWidth;
+	}
+
+	public void setFullWidth(Boolean fullWidth) {
+		this.fullWidth = fullWidth;
 	}
 
 }

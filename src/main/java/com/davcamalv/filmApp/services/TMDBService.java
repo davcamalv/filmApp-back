@@ -16,6 +16,7 @@ import com.davcamalv.filmApp.domain.MediaContent;
 import com.davcamalv.filmApp.dtos.CreditsDTO;
 import com.davcamalv.filmApp.dtos.MediaContentTMDBDTO;
 import com.davcamalv.filmApp.dtos.PersonDTO;
+import com.davcamalv.filmApp.dtos.ReviewListDTO;
 import com.davcamalv.filmApp.dtos.SearchPersonDTO;
 import com.davcamalv.filmApp.dtos.TrailerDTO;
 import com.davcamalv.filmApp.dtos.TrailerResultDTO;
@@ -106,6 +107,22 @@ public class TMDBService {
 		SearchPersonDTO response = restTemplate.getForEntity(url, SearchPersonDTO.class).getBody();
 		if(response != null) {
 			res = response.getResults();
+		}
+		return res;
+	}
+	
+	public ReviewListDTO getReviewsByMediaContent(MediaContent mediaContent) {
+		ReviewListDTO res = new ReviewListDTO();
+		String url = Constants.TMBD_BASE_URL;
+		RestTemplate restTemplate = new RestTemplate();
+		MediaContentTMDBDTO mediaContentTMDBDTO = getMediaContentByImdbID(mediaContent.getImdbId());
+		if (mediaContentTMDBDTO != null && mediaContentTMDBDTO.getMovie_results() != null
+				&& !mediaContentTMDBDTO.getMovie_results().isEmpty()) {
+			String type = mediaContent.getMediaType().equals(MediaType.MOVIE) ? "movie/" : "tv/";
+			url = url + type + mediaContentTMDBDTO.getMovie_results().get(0).getId() + "/reviews?api_key="
+					+ configurationService.getByProperty(Constants.TMDB_APIKEY).getValue();
+
+			res = restTemplate.getForEntity(url, ReviewListDTO.class).getBody();
 		}
 		return res;
 	}
