@@ -1,3 +1,4 @@
+truncate table premiere;
 truncate table chat_function; 
 truncate table chat_session;
 truncate table message;
@@ -13,7 +14,6 @@ truncate table media_content_platform;
 truncate table option_selectable;
 truncate table option_value;
 truncate table platform;
-truncate table premiere;
 truncate table rol;
 truncate table selectable;
 truncate table user_rol;
@@ -41,3 +41,5 @@ INSERT INTO chat_function (id, description, button_value, button_label) VALUES(3
 INSERT INTO media_content (id, title, description, media_type, creation_date, just_watch_url, imdb_id, poster, score, search_performed, tmdb_id) VALUES (9174, 'El club de la lucha', 'Un joven sin ilusiones lucha contra su insomnio, consecuencia quizás de su hastío por su gris y rutinaria vida. En un viaje en avión conoce a Tyler Durden, un carismático vendedor de jabón que sostiene una filosofía muy particular: el perfeccionismo es cosa de gentes débiles; en cambio, la autodestrucción es lo único que hace que realmente la vida merezca la pena. Ambos deciden entonces formar un club secreto de lucha donde descargar sus frustaciones y su ira que tendrá un éxito arrollador.', 'MOVIE', '(1999)', 'https://www.justwatch.com/es/pelicula/el-club-de-la-lucha', 'tt0137523', 'https://images.justwatch.com/poster/66105154/s718', '8.8 (1m)', 1, 550);
 
 INSERT INTO chat_user (id, name, email, username, password, birth_date, avatar) VALUES(7, 'admin', 'dcamalv@gmail.com', 'admin', '$2a$10$iFmD6ZPuGsOg2meIdVxI4OB8NJIRZ8561.QEIz50VPlPhqA.MKA/K', NULL, NULL);
+
+INSERT INTO premiere (id, premiere_date, season, news, media_content_id, platform_id) VALUES (1, '2021-11-12', 'Temporada 1', 'Capítulo 1', 9174, 1);

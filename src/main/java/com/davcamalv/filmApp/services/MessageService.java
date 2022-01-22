@@ -178,7 +178,7 @@ public class MessageService {
 
 	protected MessageDTO getPremieres(MessageResponse response, String userInput) throws ParseException {
 		Map<String, String> parameters = getParameters(response, userInput);
-		Date date = null;
+		Date date = new Date();
 		String dateStr = parameters.get("date");
 		String platformStr = parameters.get("provider");
 		if (dateStr != null && !"saltar".equals(dateStr)) {

@@ -2,6 +2,7 @@ package com.davcamalv.filmApp.services;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import javax.transaction.Transactional;
 
@@ -32,5 +33,13 @@ public class PremiereService {
 			id = platform.getId();
 		}
 		return premiereRepository.findByPremiereDate(date, id);
+	}
+	
+	public List<Premiere> findAll(){
+		return premiereRepository.findAll();
+	}
+
+	public Optional<Premiere> findOne(long i) {
+		return premiereRepository.findById(i);
 	}
 }

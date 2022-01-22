@@ -63,7 +63,7 @@ public class JustWatchService {
 	private TMDBService tmdbService;
 
 	@Scheduled(cron = "0 0 3 * * ?", zone = "Europe/Paris")
-	protected void scrapePremieres() {
+	public void scrapePremieres() {
 		WebDriver webDriver = Utils.createWebDriver();
 		JavascriptExecutor js = (JavascriptExecutor) webDriver;
 		try {
@@ -90,13 +90,18 @@ public class JustWatchService {
 				String platformLogo = "";
 
 				List<WebElement> mediaContents;
+				int numberOfProviderBlock = 0;
 				for (WebElement providerBlock : providersBlocks) {
+					if(numberOfProviderBlock == 4) {
+						break;
+					}
 					platformName = providerBlock.findElement(By.tagName("img")).getAttribute("alt");
 					platformLogo = providerBlock.findElement(By.tagName("img")).getAttribute("src").replace("s25",
 							"s100");
 					platform = platformService.getOrCreateByName(platformName, platformLogo);
 					mediaContents = providerBlock.findElements(By.className("horizontal-title-list__item"));
 					getMediaContentData(mediaContents, platform);
+					numberOfProviderBlock++;
 				}
 			}
 		} catch (Exception e) {
@@ -113,7 +118,11 @@ public class JustWatchService {
 		String news = "";
 		String season = "";
 		MediaContent mediaContent;
+		int numberOfMediaContentElement = 0;
 		for (WebElement mediaContentElement : mediaContents) {
+			if(numberOfMediaContentElement == 4) {
+				break;
+			}
 			justWatchUrl = mediaContentElement.getAttribute("href");
 			List<WebElement> imgs = mediaContentElement.findElements(By.tagName("img"));
 			if (!imgs.isEmpty()) {
@@ -136,6 +145,7 @@ public class JustWatchService {
 			}
 			mediaContent = mediaContentService.getOrCreateByJustWatchUrl(justWatchUrl, title, poster, null);
 			premiereService.save(new Premiere(new Date(), season, news, mediaContent, platform));
+			numberOfMediaContentElement++;
 		}
 	}
 
