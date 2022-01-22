@@ -38,27 +38,25 @@ public class WatsonServiceTest {
 	UserDetailsService userDetailsService;
 	@Test
 	public void sendMessage1Test() {
-		MessageDTO message = new MessageDTO("hola", SenderType.user.name(), false, null);
+		MessageDTO message = new MessageDTO("hola", SenderType.user.name(), false, null, false);
 		UserDetails userDetails = userDetailsService.loadUserByUsername ("admin");
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails.getUsername(), userDetails.getPassword(), userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authToken);
 		User user = userService.getByUserLogged();
 		MessageDTO response = watsonService.sendMessage(user.getId(), message);
 		assertEquals(response.getSender(), SenderType.server.name());
-		assertNotEquals(response.getMessage(), 0);
 		assertNotEquals(response.getMessage(), "Disculpe, actualmente no tengo implementada esa funcionalidad");
 	}
 	
 	@Test
 	public void sendMessage2Test() {
-		MessageDTO message = new MessageDTO("dime las funciones", SenderType.user.name(), false, null);
+		MessageDTO message = new MessageDTO("dime las funciones", SenderType.user.name(), false, null, false);
 		UserDetails userDetails = userDetailsService.loadUserByUsername ("admin");
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails.getUsername(), userDetails.getPassword(), userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authToken);
 		User user = userService.getByUserLogged();
 		MessageDTO response = watsonService.sendMessage(user.getId(), message);
 		assertEquals(response.getSender(), SenderType.server.name());
-		assertNotEquals(response.getMessage(), 0);
 		assertNotEquals(response.getMessage(), "Disculpe, actualmente no tengo implementada esa funcionalidad");
 		assertTrue(response.getSpecialKeyboard());
 	}

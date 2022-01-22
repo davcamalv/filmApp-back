@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,7 @@ import com.davcamalv.filmApp.domain.Message;
 import com.davcamalv.filmApp.domain.Option;
 import com.davcamalv.filmApp.domain.Platform;
 import com.davcamalv.filmApp.domain.Premiere;
+import com.davcamalv.filmApp.domain.Review;
 import com.davcamalv.filmApp.domain.Selectable;
 import com.davcamalv.filmApp.domain.User;
 import com.davcamalv.filmApp.dtos.MediaContentDTO;
@@ -36,6 +38,7 @@ import com.davcamalv.filmApp.dtos.MessageDTO;
 import com.davcamalv.filmApp.dtos.OptionDTO;
 import com.davcamalv.filmApp.dtos.PersonDTO;
 import com.davcamalv.filmApp.dtos.PlatformWithPriceDTO;
+import com.davcamalv.filmApp.dtos.ReviewDTO;
 import com.davcamalv.filmApp.dtos.SearchDTO;
 import com.davcamalv.filmApp.dtos.SelectableDTO;
 import com.davcamalv.filmApp.enums.MediaType;
@@ -49,6 +52,8 @@ import com.ibm.watson.assistant.v2.model.RuntimeResponseGeneric;
 
 @Service
 public class MessageService {
+	
+	protected final Logger log = Logger.getLogger(MessageService.class);
 
 	private static final String USER_INPUT = "userInput";
 
@@ -78,11 +83,17 @@ public class MessageService {
 
 	@Autowired
 	private TMDBService TMDBService;
+	
+	@Autowired
+	private WatsonService watsonService;
 
+	@Autowired
+	private ReviewService reviewService;
+	
 	public List<MessageDTO> findMessagesByUser(int pageNumber, int pageSize, User user) {
 		Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("id").descending());
 		List<MessageDTO> res = messageRepository.findByUser(pageable, user).stream()
-				.map(x -> new MessageDTO(x.getMessage(), x.getSender().name(), false, null))
+				.map(x -> new MessageDTO(x.getMessage(), x.getSender().name(), false, null, false))
 				.collect(Collectors.toList());
 		Collections.reverse(res);
 		return res;
@@ -90,13 +101,13 @@ public class MessageService {
 
 	public Message saveUserMessage(MessageDTO messageDTO) {
 		Message message = new Message(Utils.makeSafeMessage(messageDTO.getMessage()),
-				SenderType.valueOf(messageDTO.getSender()), userService.getByUserLogged(), false, null);
+				SenderType.valueOf(messageDTO.getSender()), userService.getByUserLogged(), false, null, false);
 		return messageRepository.save(message);
 	}
 
 	public Message save(MessageDTO messageDTO, Selectable selectable) {
 		Message message = new Message(messageDTO.getMessage(), SenderType.valueOf(messageDTO.getSender()),
-				userService.getByUserLogged(), messageDTO.getSpecialKeyboard(), selectable);
+				userService.getByUserLogged(), messageDTO.getSpecialKeyboard(), selectable, messageDTO.getFullWidth());
 		return messageRepository.save(message);
 	}
 
@@ -122,7 +133,7 @@ public class MessageService {
 		switch (output.responseType()) {
 		case "image":
 			String source = Utils.makeSafeMessage(output.source());
-			res = new MessageDTO(createImageMessage(source), SenderType.server.name(), false, null);
+			res = new MessageDTO(createImageMessage(source), SenderType.server.name(), false, null, false);
 			break;
 		case "option":
 			String title = output.title();
@@ -134,7 +145,7 @@ public class MessageService {
 			String text = Utils.makeSafeMessage(output.text());
 			htmlAttributes.put(Constants.STYLE, Constants.MARGIN_0);
 			String html = Utils.createHtmlTag(Constants.P, text, htmlAttributes);
-			res = new MessageDTO(html, SenderType.server.name(), false, null);
+			res = new MessageDTO(html, SenderType.server.name(), false, null, false);
 			break;
 		}
 		return res;
@@ -151,7 +162,7 @@ public class MessageService {
 			htmlAttributes.put(Constants.STYLE, Constants.MARGIN_0);
 			String html = Utils.createHtmlTag(Constants.P,
 					"Disculpe, actualmente no tengo implementada esa funcionalidad", htmlAttributes);
-			res = new MessageDTO(html, SenderType.server.name(), false, null);
+			res = new MessageDTO(html, SenderType.server.name(), false, null, false);
 		}
 		return res;
 	}
@@ -221,7 +232,7 @@ public class MessageService {
 		Long id = Long.parseLong(parameters.get(USER_INPUT));
 		MediaContent mediaContent = mediaContentService.findById(id);
 		userService.deleteElementMediaContentList(id);
-		return new MessageDTO("He eliminado '" + mediaContent.getTitle() + "' de tu lista", SenderType.server.name(), false, null);
+		return new MessageDTO("He eliminado '" + mediaContent.getTitle() + "' de tu lista", SenderType.server.name(), false, null, false);
 	}
 
 	protected MessageDTO getPeopleSearches(MessageResponse response, String userInput)
@@ -247,7 +258,7 @@ public class MessageService {
 	protected MessageDTO getPerson(MessageResponse response, String userInput) {
 		Map<String, String> parameters = getParameters(response, userInput);
 		String res = getPersonMessage(TMDBService.getPersonByID(Integer.parseInt(parameters.get(USER_INPUT))));
-		return new MessageDTO(res, SenderType.server.name(), false, null);
+		return new MessageDTO(res, SenderType.server.name(), false, null, false);
 	}
 
 	protected MessageDTO getFilteredSearches(MessageResponse response, String userInput) {
@@ -288,7 +299,7 @@ public class MessageService {
 			MediaContent mediaContentValue = mediaContent.get();
 			res = getActorsMessage(TMDBService.getCastByMediaContent(mediaContentValue).getCast(), mediaContentValue);
 		}
-		return new MessageDTO(res, SenderType.server.name(), false, null);
+		return new MessageDTO(res, SenderType.server.name(), false, null, false);
 	}
 
 	protected MessageDTO getDirector(MessageResponse response, String userInput) {
@@ -302,7 +313,7 @@ public class MessageService {
 			res = getPersonMessage(
 					TMDBService.getDirector(TMDBService.getCastByMediaContent(mediaContentValue).getCrew()));
 		}
-		return new MessageDTO(res, SenderType.server.name(), false, null);
+		return new MessageDTO(res, SenderType.server.name(), false, null, false);
 	}
 
 	private String getPersonMessage(PersonDTO person) {
@@ -379,7 +390,7 @@ public class MessageService {
 				res = res + createYoutubeVideo(urlTrailer);
 			}
 		}
-		return new MessageDTO(res, SenderType.server.name(), false, null);
+		return new MessageDTO(res, SenderType.server.name(), false, null, false);
 	}
 
 	protected MessageDTO addToWatchList(MessageResponse response, String userInput) {
@@ -392,7 +403,7 @@ public class MessageService {
 			userService.addToWatchList(mediaContent.get());
 			res = "He añadido '" + mediaContent.get().getTitle() + "' a su lista";
 		}
-		return new MessageDTO(res, SenderType.server.name(), false, null);
+		return new MessageDTO(res, SenderType.server.name(), false, null, false);
 	}
 
 	protected MessageDTO getMyList(MessageResponse response, String userInput) {
@@ -402,7 +413,7 @@ public class MessageService {
 			res = "Los títulos de su lista son los siguientes:" + Constants.BR;
 			res = res + createMyListMessage(myList);
 		}
-		return new MessageDTO(res, SenderType.server.name(), false, null);
+		return new MessageDTO(res, SenderType.server.name(), false, null, false);
 	}
 
 	private String createMyListMessage(List<MediaContent> myList) {
@@ -458,7 +469,7 @@ public class MessageService {
 		} else {
 			res = "Lo siento no he encontrado información relacionada con los géneros";
 		}
-		return new MessageDTO(res, SenderType.server.name(), false, null);
+		return new MessageDTO(res, SenderType.server.name(), false, null, false);
 	}
 
 	private String createContentMappingMessage(List<String> values) {
@@ -534,7 +545,7 @@ public class MessageService {
 		message = message + Utils.createHtmlTag(Constants.DIV, typeTitle + typeValue, htmlAttributes);
 		message = message + createPricesMessage(mediaContentDTO);
 
-		return new MessageDTO(message, SenderType.server.name(), false, null);
+		return new MessageDTO(message, SenderType.server.name(), false, null, false);
 	}
 
 	private String createPricesMessage(MediaContentDTO mediaContentDTO) {
@@ -679,7 +690,7 @@ public class MessageService {
 						+ Constants.BR;
 			}
 		}
-		return new MessageDTO(message, SenderType.server.name(), false, null);
+		return new MessageDTO(message, SenderType.server.name(), false, null, false);
 	}
 
 	private String createImageMessage(String source) {
@@ -710,13 +721,141 @@ public class MessageService {
 		SelectableDTO selectableDTO = new SelectableDTO(selectable.getId(), optionsDTO);
 		String html = Utils.createHtmlTag(Constants.P, title + description, htmlAttributes);
 
-		return new MessageDTO(html, SenderType.server.name(), true, selectableDTO);
+		return new MessageDTO(html, SenderType.server.name(), true, selectableDTO, false);
 	}
 
 	private MessageDTO getMessageError(String text) {
 		Map<String, String> htmlAttributes = new HashMap<>();
 		htmlAttributes.put(Constants.STYLE, Constants.MARGIN_0);
 		String html = Utils.createHtmlTag(Constants.P, text, htmlAttributes);
-		return new MessageDTO(html, SenderType.server.name(), false, null);
+		return new MessageDTO(html, SenderType.server.name(), false, null, false);
 	}
+	
+	protected MessageDTO getReviews(MessageResponse response, String userInput) {
+		Map<String, String> parameters = getParameters(response, userInput);
+		MessageDTO res;
+		Optional<MediaContent> mediaContentOptional = mediaContentService.getByJustWatchUrl(parameters.get(Constants.URL_ACTUAL));
+		if (mediaContentOptional.isPresent()) {
+			MediaContent mediaContent = mediaContentOptional.get();
+			List<ReviewDTO> reviews = reviewService.findByMediaContent(mediaContent);
+			if (!reviews.isEmpty()) {
+				res = getReviewsMessage(mediaContent, reviews);
+			} else {
+				res = watsonService.sendMessageNoSave(userService.getByUserLogged().getId(), new MessageDTO("###no_hay_reviews###", SenderType.user.name(), false, null, false));
+			}
+		} else {
+			res = getMessageError("Lo siento, no puedo realizar la acción solicitada");
+		}
+		return res;
+	}
+	
+	protected MessageDTO getTMDBReviews(MessageResponse response, String userInput){
+		Map<String, String> parameters = getParameters(response, userInput);
+		MessageDTO res = new MessageDTO("Lo siento no he encontrado opiniones de ese título en TMDB", SenderType.server.name(), false, null, false);
+		Optional<MediaContent> mediaContentOptional = mediaContentService.getByJustWatchUrl(parameters.get(Constants.URL_ACTUAL));
+		if (mediaContentOptional.isPresent()) {
+			MediaContent mediaContent = mediaContentOptional.get();
+			List<ReviewDTO> reviews = TMDBService.getReviewsByMediaContent(mediaContent).getResults();
+			if (!reviews.isEmpty()) {
+				res = getReviewsMessage(mediaContent, reviews);
+			}
+		}
+		return res;
+	}
+	
+	private MessageDTO getReviewsMessage(MediaContent mediaContent, List<ReviewDTO> reviews) {
+		Map<String, String> htmlAttributes = new HashMap<>();
+		String html;
+		String reviewDivs = "";
+		String avatar;
+		String username;
+		String content;
+		String date;
+		String ratingDiv;
+		String stars;
+		for (ReviewDTO reviewDTO : reviews) {
+			htmlAttributes.clear();
+			htmlAttributes.put(Constants.CLASS, Constants.REVIEW_AVATAR);
+			String avatarUrl = reviewDTO.getAuthor_details().getAvatar_path();
+			if(avatarUrl == null) {
+				avatarUrl = "/assets/avatars/1.png";
+			}else if(avatarUrl.startsWith("/https:")) {
+				avatarUrl = avatarUrl.substring(1);
+			}else if(reviewDTO.getRating() == null){
+				avatarUrl = Constants.TMBD_IMAGE_BASE_URL + avatarUrl;
+			}
+			htmlAttributes.put(Constants.SRC, avatarUrl);
+			avatar = Utils.createHtmlTag(Constants.IMG, "", htmlAttributes);
+			username = Utils.createHtmlTag(Constants.H1, reviewDTO.getAuthor_details().getUsername(), new HashMap<>());
+			content = Utils.createHtmlTag(Constants.P, reviewDTO.getContent(), new HashMap<>());
+			htmlAttributes.clear();
+			htmlAttributes.put(Constants.STYLE, Constants.FONT_STYLE_ITALIC);
+			date = Utils.createHtmlTag(Constants.P, new SimpleDateFormat("dd/MM/yyyy").format(reviewDTO.getCreated_at()), htmlAttributes);
+			
+			if(reviewDTO.getRating() != null) {
+				htmlAttributes.clear();
+				htmlAttributes.put(Constants.SRC, "/assets/ratings/" + reviewDTO.getRating() + "stars.png");
+				stars = Utils.createHtmlTag(Constants.IMG, "", htmlAttributes);
+				htmlAttributes.clear();
+				htmlAttributes.put(Constants.CLASS, Constants.REVIEW_RATING);
+				ratingDiv = Utils.createHtmlTag(Constants.DIV, stars, htmlAttributes);
+			} else {
+				ratingDiv = "";
+			}
+			
+			htmlAttributes.clear();
+			htmlAttributes.put(Constants.CLASS, Constants.REVIEW);
+			reviewDivs = reviewDivs + Utils.createHtmlTag(Constants.DIV, avatar + username + content + date + ratingDiv, htmlAttributes);
+		}
+		htmlAttributes.clear();
+		htmlAttributes.put(Constants.CLASS, Constants.REVIEW_LIST);
+		String title = Utils.createHtmlTag(Constants.P, "He encontrado las siguientes opiniones: ", new HashMap<>());
+		html = Utils.createHtmlTag(Constants.DIV, title + Constants.BR + reviewDivs, new HashMap<>());
+		return new MessageDTO(html, SenderType.server.name(), false, null, true);
+	}
+	
+	protected MessageDTO saveReview(MessageResponse response, String userInput){
+		Map<String, String> parameters = getParameters(response, userInput);
+		Optional<MediaContent> mediaContentOptional = mediaContentService.getByJustWatchUrl(parameters.get(Constants.URL_ACTUAL));
+		User user = userService.getByUserLogged();
+		MessageDTO res = new MessageDTO(); 
+		try {
+			if(mediaContentOptional.isPresent()) {
+				MediaContent mediaContent = mediaContentOptional.get();
+				if(reviewService.existsByMediaContentAndUserAndDraft(mediaContent, user, false)) {
+					reviewService.save(new Review(new Date(), userInput, Integer.valueOf(parameters.get("rating").substring(0, 1)), user, mediaContent, true));
+					List<Option> options = new ArrayList<Option>();
+					options.add(new Option("Sobreescribir", "Sobreescribir", null));
+					options.add(new Option("No sobreescribir", "No sobreescribir", null));
+					res = createOptionMessage("Ya existe una valoración suya para este título", " ¿quiere sobreescribirla?", options);
+				} else {
+						reviewService.save(new Review(new Date(), userInput, Integer.valueOf(parameters.get("rating").substring(0, 1)), user, mediaContent, false));
+						res = new MessageDTO("Se ha guardado correctamente su opinión", SenderType.server.name(), false, null, false);
+				}
+			}
+		} catch (Exception e){
+			log.error("error al guardar la review", e);
+			res = getMessageError("Disculpe, ha ocurrido un error al guardar la opinión");
+		}
+		return res;
+	}
+	
+	protected MessageDTO overwriteReview(MessageResponse response, String userInput){
+		Map<String, String> parameters = getParameters(response, userInput);
+		Optional<MediaContent> mediaContentOptional = mediaContentService.getByJustWatchUrl(parameters.get(Constants.URL_ACTUAL));
+		User user = userService.getByUserLogged();
+		MessageDTO res = new MessageDTO();
+		try {
+			if(mediaContentOptional.isPresent()) {
+				MediaContent mediaContent = mediaContentOptional.get();
+				reviewService.updateDraft(mediaContent, user);
+				res = new MessageDTO("Se ha modificado correctamente su opinión", SenderType.server.name(), false, null, false);
+			}
+		} catch (Exception e){
+			log.error("error al modificar la review", e);
+			res = getMessageError("Disculpe, ha ocurrido un error al modificar la opinión");
+		}
+		return res;
+	}
+	
 }
