@@ -9,34 +9,22 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
 @Entity
-@Table(name = "platform")
-public class Platform {
-	
+@Table(name = "genre")
+public class Genre {
 	@Id
 	@NotNull
     @GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
 	
 	@NotNull
-	@Column(name = "name", length = 1000)
+	@Column(name = "name")
 	private String name;
 	
-	@Column(name = "logo", length = 1000)
-	private String logo;
-	
-	@Column(name = "short_name", length = 1000)
+	@Column(name = "short_name")
 	private String shortName;
-
-	public Platform(@NotNull String name, String logo, String shortName) {
-		super();
-		this.name = name;
-		this.logo = logo;
-		this.shortName = shortName;
-	}
-
-	public Platform() {
-		super();
-	}
+	
+	@Column(name = "tmdb_id")
+	private Integer tmdbId;
 
 	public Long getId() {
 		return id;
@@ -54,20 +42,31 @@ public class Platform {
 		this.name = name;
 	}
 
-	public String getLogo() {
-		return logo;
-	}
-
-	public void setLogo(String logo) {
-		this.logo = logo;
-	}
-
 	public String getShortName() {
 		return shortName;
 	}
 
 	public void setShortName(String shortName) {
 		this.shortName = shortName;
+	}
+
+	public Integer getTmdbId() {
+		return tmdbId;
+	}
+
+	public void setTmdbId(Integer tmdbId) {
+		this.tmdbId = tmdbId;
+	}
+
+	public Genre(@NotNull String name, String shortName, Integer tmdbId) {
+		super();
+		this.name = name;
+		this.shortName = shortName;
+		this.tmdbId = tmdbId;
+	}
+
+	public Genre() {
+		super();
 	}
 	
 }

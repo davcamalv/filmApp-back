@@ -5,6 +5,8 @@ public class OptionDTO {
 	private String label;
 	
 	private String text;
+	
+	private String image;
 
 	public String getLabel() {
 		return label;
@@ -22,10 +24,19 @@ public class OptionDTO {
 		this.text = text;
 	}
 
-	public OptionDTO(String label, String text) {
+	public String getImage() {
+		return image;
+	}
+
+	public void setImage(String image) {
+		this.image = image;
+	}
+
+	public OptionDTO(String label, String text, String image) {
 		super();
 		this.label = label;
 		this.text = text;
+		this.image = image;
 	}
 
 	public OptionDTO() {

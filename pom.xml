@@ -120,6 +120,18 @@
 			<artifactId>jsoup</artifactId>
 			<version>1.11.2</version>
 		</dependency>
+		
+		<dependency>
+		    <groupId>org.hsqldb</groupId>
+		    <artifactId>hsqldb</artifactId>
+		    <scope>test</scope>
+		</dependency>
+		
+		<dependency>
+		  <groupId>junit</groupId>
+		  <artifactId>junit</artifactId>
+		  <scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<profiles>
@@ -129,13 +141,17 @@
             	<activeByDefault>true</activeByDefault> 
             </activation> 
             <properties>
-                <activatedProperties>dev</activatedProperties>             
+                <activatedProperties>dev</activatedProperties>
+                <sonar.organization>davcamalv</sonar.organization>
+ 				<sonar.host.url>https://sonarcloud.io</sonar.host.url>             
             </properties>
         </profile>
         <profile>
             <id>pro</id>
             <properties>
-                <activatedProperties>pro</activatedProperties>                
+                <activatedProperties>pro</activatedProperties>   
+                <sonar.organization>davcamalv</sonar.organization>
+ 				<sonar.host.url>https://sonarcloud.io</sonar.host.url>             
             </properties>
         </profile>
     </profiles> 
@@ -144,6 +160,41 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+			    <groupId>org.jacoco</groupId>
+			    <artifactId>jacoco-maven-plugin</artifactId>
+			    <version>0.8.7</version>
+			    <configuration>
+	                <rules>
+	                    <rule implementation="org.jacoco.maven.RuleConfiguration">
+	                        <excludes>
+	                            <exclude>com.davcamalv.filmApp.controllers</exclude>
+   	                            <exclude>com.davcamalv.filmApp.domain</exclude>
+   	                            <exclude>com.davcamalv.filmApp.dtos</exclude>
+   	                            <exclude>com.davcamalv.filmApp.enums</exclude>
+   	                            <exclude>com.davcamalv.filmApp.repositories</exclude>
+   	                            <exclude>com.davcamalv.filmApp.security</exclude>
+   	                            <exclude>com.davcamalv.filmApp.utils</exclude>
+	                        </excludes>
+	                        <element>PACKAGE</element>
+	                    </rule>
+	                </rules>
+	            </configuration>
+			    <executions>
+			        <execution>
+			            <goals>
+			                <goal>prepare-agent</goal>
+			            </goals>
+			        </execution>
+			        <execution>
+			            <id>report</id>
+			            <phase>prepare-package</phase>
+			            <goals>
+			                <goal>report</goal>
+			            </goals>
+			        </execution>
+			    </executions>
 			</plugin>
 		</plugins>
 	</build>

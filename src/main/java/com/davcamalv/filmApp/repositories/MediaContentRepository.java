@@ -11,6 +11,4 @@ import com.davcamalv.filmApp.domain.MediaContent;
 public interface MediaContentRepository extends JpaRepository<MediaContent, Long>{
 
 	Optional<MediaContent> findByJustWatchUrl(String justWatchUrl);
-
-
 }

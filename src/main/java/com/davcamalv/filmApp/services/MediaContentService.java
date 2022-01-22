@@ -17,35 +17,41 @@ import com.davcamalv.filmApp.repositories.MediaContentRepository;
 public class MediaContentService {
 
 	protected final Logger log = Logger.getLogger(MediaContentService.class);
-	
+
 	@Autowired
 	private MediaContentRepository mediaContentRepository;
-	
+
 	public MediaContent save(MediaContent mediaContent) {
 		return mediaContentRepository.save(mediaContent);
 	}
-	
-	public MediaContent getOrCreateByJustWatchUrl(String justWatchUrl, String title, String poster, String creationDate) {
+
+	public MediaContent getOrCreateByJustWatchUrl(String justWatchUrl, String title, String poster,
+			String creationDate) {
 		MediaContent res;
 		Optional<MediaContent> mediaContentBD = getByJustWatchUrl(justWatchUrl);
-		if(mediaContentBD.isPresent()) {
+		if (mediaContentBD.isPresent()) {
 			res = mediaContentBD.get();
-		}else {
+		} else {
 			MediaType mediaType = getMediaTypeByUrl(justWatchUrl);
-			res = mediaContentRepository.save(new MediaContent(title, null, mediaType, creationDate, justWatchUrl, null, poster, null, null));
+			res = mediaContentRepository.save(new MediaContent(title, null, mediaType, creationDate, justWatchUrl, null,
+					poster, null, null, null, null));
 		}
 		return res;
 	}
-	
+
 	public Optional<MediaContent> getByJustWatchUrl(String justWatchUrl) {
 		return mediaContentRepository.findByJustWatchUrl(justWatchUrl);
 	}
-	
+
 	private MediaType getMediaTypeByUrl(String url) {
 		MediaType res = MediaType.MOVIE;
-		if(url != null && url.contains("serie")) {
+		if (url != null && url.contains("serie")) {
 			res = MediaType.SERIE;
 		}
 		return res;
+	}
+
+	public MediaContent findById(Long id) {
+		return mediaContentRepository.findById(id).get();
 	}
 }
