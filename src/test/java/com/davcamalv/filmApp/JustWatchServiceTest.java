@@ -96,7 +96,6 @@ public class JustWatchServiceTest {
 		assertNotEquals(mediaContent.getCreationDate(), null);
 		assertNotEquals(mediaContent.getPoster(), null);
 		assertNotEquals(mediaContent.getScore(), null);
-		assertFalse(mediaContent.getStream().isEmpty());
 	}
 
 }
