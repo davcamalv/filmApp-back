@@ -24,6 +24,7 @@ import com.davcamalv.filmApp.domain.Session;
 import com.davcamalv.filmApp.domain.User;
 import com.davcamalv.filmApp.dtos.MessageDTO;
 import com.davcamalv.filmApp.enums.SenderType;
+import com.davcamalv.filmApp.services.MessageService;
 import com.davcamalv.filmApp.services.SessionService;
 import com.davcamalv.filmApp.services.UserService;
 import com.davcamalv.filmApp.services.WatsonService;
@@ -45,6 +46,9 @@ public class WatsonServiceTest {
 	
 	@Autowired
 	SessionService sessionService;
+	
+	@Autowired
+	MessageService messageService;
 	
 	@Test
 	public void sendMessage1Test() {
@@ -87,6 +91,23 @@ public class WatsonServiceTest {
 		MessageDTO response = watsonService.sendMessage(user.getId(), message);
 		assertEquals(response.getSender(), SenderType.server.name());
 		assertNotEquals(response.getMessage(), "Disculpe, actualmente no tengo implementada esa funcionalidad");
+	}
+	
+	@Test
+	public void sendMessage4Test() {
+		MessageDTO message = new MessageDTO("hola", SenderType.user.name(), false, null, false);
+		UserDetails userDetails = userDetailsService.loadUserByUsername ("admin");
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails.getUsername(), userDetails.getPassword(), userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authToken);
+		User user = userService.getByUserLogged();
+		assertEquals(messageService.findMessagesByUser(0, 100, user).size(), 0);
+
+		MessageDTO response = watsonService.sendMessageNoSave(user.getId(), message);
+		assertEquals(response.getSender(), SenderType.server.name());
+		assertNotEquals(response.getMessage(), "Disculpe, actualmente no tengo implementada esa funcionalidad");
+		assertEquals(messageService.findMessagesByUser(0, 100, user).size(), 1);
+
+	
 	}
 	
 }

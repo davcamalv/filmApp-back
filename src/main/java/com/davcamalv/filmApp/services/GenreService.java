@@ -1,8 +1,8 @@
 package com.davcamalv.filmApp.services;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
@@ -30,7 +30,15 @@ public class GenreService {
 
 	public List<ProfileGenresDTO> findAll() {
 		List<Genre> genres = genreRepository.findAll();
-		return genres.stream().map(x -> new ProfileGenresDTO(x.getId(), x.getName())).collect(Collectors.toList());
+		List<String> genresNames = new ArrayList<String>();
+		List<ProfileGenresDTO> res = new ArrayList<ProfileGenresDTO>();
+		for (Genre genre : genres) {
+			if(!genresNames.contains(genre.getName())) {
+				genresNames.add(genre.getName());
+				res.add(new ProfileGenresDTO(genre.getId(), genre.getName()));
+			}
+		}
+		return res;
 	}
 	
 	public List<Genre> findByIds(List<Long> ids) {
