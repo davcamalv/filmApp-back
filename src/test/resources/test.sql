@@ -4,6 +4,7 @@ truncate table chat_session;
 truncate table message;
 truncate table genre_list;
 truncate table user_rol;
+truncate table review;
 truncate table chat_user;
 truncate table configuration;
 truncate table media_content_genre;
@@ -48,4 +49,8 @@ INSERT INTO genre_list (genre_id, user_id) VALUES (1, 7);
 
 INSERT INTO rol (id, role_name) VALUES (1, 'ROLE_ADMIN');
 INSERT INTO rol (id, role_name) VALUES (2, 'ROLE_USER');
+
+INSERT INTO review (id, content, created_at, rating, user_id, media_content_id, draft) VALUES (1, 'review 1', '2021-12-12 12:00:00', 4, 7, 9174, 0);
+INSERT INTO review (id, content, created_at, rating, user_id, media_content_id, draft) VALUES (2, 'review 2', '2021-12-12 12:00:00', 4, 7, 9174, 1);
+
 
