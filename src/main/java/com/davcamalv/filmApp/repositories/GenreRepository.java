@@ -15,7 +15,4 @@ public interface GenreRepository extends JpaRepository<Genre, Long>{
 	Optional<Genre> findByName(String name);
 
 	Optional<Genre> findByTmdbId(Integer tmdbId);
-	
-	@Query("select g from Genre g group by g.name")
-	List<Genre> findAll();
 }

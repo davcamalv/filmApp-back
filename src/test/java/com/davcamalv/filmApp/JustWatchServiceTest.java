@@ -89,6 +89,15 @@ public class JustWatchServiceTest {
 		assertFalse(mediaContent.getBuy().isEmpty());
 		assertFalse(mediaContent.getRent().isEmpty());
 		assertFalse(mediaContent.getStream().isEmpty());
+		MediaContentDTO mediaContentWithSearchPerformed = justWatchService.getMediaContent("https://www.justwatch.com/es/pelicula/shrek");
+		assertNotEquals(mediaContentWithSearchPerformed.getTitle(), null);
+		assertNotEquals(mediaContentWithSearchPerformed.getDescription(), null);
+		assertNotEquals(mediaContentWithSearchPerformed.getCreationDate(), null);
+		assertNotEquals(mediaContentWithSearchPerformed.getPoster(), null);
+		assertNotEquals(mediaContentWithSearchPerformed.getScore(), null);
+		assertFalse(mediaContentWithSearchPerformed.getBuy().isEmpty());
+		assertFalse(mediaContentWithSearchPerformed.getRent().isEmpty());
+		assertFalse(mediaContentWithSearchPerformed.getStream().isEmpty());
 	}
 	
 	@Test

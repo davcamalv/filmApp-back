@@ -159,5 +159,9 @@ public class UserService {
 		user.setToWatchList(toWatchList);
 		userRepository.saveAndFlush(user);
 	}
+	
+	public List<User> findAll() {
+		return userRepository.findAll();
+	}
 
 }
