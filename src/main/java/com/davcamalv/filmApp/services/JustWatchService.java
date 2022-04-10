@@ -63,7 +63,7 @@ public class JustWatchService {
 	private TMDBService tmdbService;
 
 	@Scheduled(cron = "0 0 3 * * ?", zone = "Europe/Paris")
-	protected void scrapePremieres() {
+	public void scrapePremieres() {
 		WebDriver webDriver = Utils.createWebDriver();
 		JavascriptExecutor js = (JavascriptExecutor) webDriver;
 		try {
@@ -90,13 +90,18 @@ public class JustWatchService {
 				String platformLogo = "";
 
 				List<WebElement> mediaContents;
+				int numberOfProviderBlock = 0;
 				for (WebElement providerBlock : providersBlocks) {
+					if(numberOfProviderBlock == 4) {
+						break;
+					}
 					platformName = providerBlock.findElement(By.tagName("img")).getAttribute("alt");
 					platformLogo = providerBlock.findElement(By.tagName("img")).getAttribute("src").replace("s25",
 							"s100");
 					platform = platformService.getOrCreateByName(platformName, platformLogo);
 					mediaContents = providerBlock.findElements(By.className("horizontal-title-list__item"));
 					getMediaContentData(mediaContents, platform);
+					numberOfProviderBlock++;
 				}
 			}
 		} catch (Exception e) {
@@ -113,7 +118,11 @@ public class JustWatchService {
 		String news = "";
 		String season = "";
 		MediaContent mediaContent;
+		int numberOfMediaContentElement = 0;
 		for (WebElement mediaContentElement : mediaContents) {
+			if(numberOfMediaContentElement == 4) {
+				break;
+			}
 			justWatchUrl = mediaContentElement.getAttribute("href");
 			List<WebElement> imgs = mediaContentElement.findElements(By.tagName("img"));
 			if (!imgs.isEmpty()) {
@@ -123,19 +132,20 @@ public class JustWatchService {
 					poster = imgs.get(0).getAttribute(Constants.DATA_SRC).replace("s166", "s718");
 				}
 			} else {
-				title = mediaContentElement.findElement(By.className("title-poster--no-poster")).getText();
+				title = mediaContentElement.findElement(By.className("title-poster--no-poster")).getAttribute("textContent");
 				poster = null;
 			}
 			List<WebElement> newsElements = mediaContentElement.findElements(By.className("title-poster__badge__new"));
 			if (!newsElements.isEmpty()) {
-				news = newsElements.get(0).findElement(By.tagName("span")).getText();
+				news = newsElements.get(0).findElement(By.tagName("span")).getAttribute("textContent");
 			}
 			List<WebElement> seasonElements = mediaContentElement.findElements(By.className("title-poster__badge"));
 			if (!seasonElements.isEmpty()) {
-				season = seasonElements.get(0).getText();
+				season = seasonElements.get(0).getAttribute("textContent");
 			}
 			mediaContent = mediaContentService.getOrCreateByJustWatchUrl(justWatchUrl, title, poster, null);
 			premiereService.save(new Premiere(new Date(), season, news, mediaContent, platform));
+			numberOfMediaContentElement++;
 		}
 	}
 
@@ -235,8 +245,8 @@ public class JustWatchService {
 			List<WebElement> searches = webDriver.findElements(By.tagName("ion-row"));
 			for (WebElement search : searches) {
 				justWatchUrl = search.findElement(By.tagName("a")).getAttribute("href");
-				searchTitle = search.findElement(By.className("title-list-row__row-header-title")).getText();
-				year = search.findElement(By.className("title-list-row__row-header-year")).getText();
+				searchTitle = search.findElement(By.className("title-list-row__row-header-title")).getAttribute("textContent");
+				year = search.findElement(By.className("title-list-row__row-header-year")).getAttribute("textContent");
 				List<WebElement> imgs = search.findElements(By.tagName("img"));
 				if (!imgs.isEmpty()) {
 					poster = imgs.get(0).getAttribute("src").replace("s166", "s718");
@@ -286,12 +296,12 @@ public class JustWatchService {
 			WebDriverWait wait = new WebDriverWait(webDriver, 15);
 			webDriver.get(url);
 			wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("jw-info-box")));
-			String creationDate = webDriver.findElement(By.className("text-muted")).getText();
+			String creationDate = webDriver.findElement(By.className("text-muted")).getAttribute("textContent");
 			String description = webDriver.findElement(By.xpath("//p[contains(@class, 'text-wrap-pre-line')]/span"))
-					.getText();
+					.getAttribute("textContent");
 			List<WebElement> imdb = webDriver.findElements(By.xpath("//*[@v-uib-tooltip='IMDB']"));
 			if (!imdb.isEmpty()) {
-				score = imdb.get(0).findElement(By.tagName("a")).getText();
+				score = imdb.get(0).findElement(By.tagName("a")).getAttribute("textContent");
 				imdbId = imdb.get(0).findElement(By.tagName("a")).getAttribute("href");
 				imdbId = imdbId.replace("https://www.imdb.com/title/", "").split("//?")[0];
 				MediaContentTMDBDTO mediaContentTMDBDTO = tmdbService.getMediaContentByImdbID(imdbId);
@@ -362,7 +372,7 @@ public class JustWatchService {
 				url = priceElement.findElement(By.tagName("a")).getAttribute("href");
 				logo = priceElement.findElement(By.tagName("img")).getAttribute("src");
 				name = priceElement.findElement(By.tagName("img")).getAttribute("alt");
-				cost = priceElement.findElement(By.className("price-comparison__grid__row__price")).getText();
+				cost = priceElement.findElement(By.className("price-comparison__grid__row__price")).getAttribute("textContent");
 				platform = platformService.getOrCreateByName(name, logo);
 				price = new Price(cost, priceType, mediaContent, platform, url);
 				priceService.save(price);

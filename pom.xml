@@ -143,7 +143,12 @@
             <properties>
                 <activatedProperties>dev</activatedProperties>
                 <sonar.organization>davcamalv</sonar.organization>
- 				<sonar.host.url>https://sonarcloud.io</sonar.host.url>             
+ 				<sonar.host.url>https://sonarcloud.io</sonar.host.url>   
+ 				<sonar.coverage.exclusions>**/controllers/*.*</sonar.coverage.exclusions>
+ 				<sonar.coverage.exclusions>**/security/*.*</sonar.coverage.exclusions>    
+ 				<sonar.coverage.exclusions>**/dtos/*.*</sonar.coverage.exclusions>      
+ 				<sonar.coverage.exclusions>**/domain/*.*</sonar.coverage.exclusions>        
+ 				<sonar.coverage.exclusions>**/services/MessageService.java</sonar.coverage.exclusions>                 
             </properties>
         </profile>
         <profile>
@@ -151,7 +156,12 @@
             <properties>
                 <activatedProperties>pro</activatedProperties>   
                 <sonar.organization>davcamalv</sonar.organization>
- 				<sonar.host.url>https://sonarcloud.io</sonar.host.url>             
+ 				<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+ 				<sonar.coverage.exclusions>**/controllers/*.*</sonar.coverage.exclusions>     
+ 				<sonar.coverage.exclusions>**/security/*.*</sonar.coverage.exclusions>    
+ 				<sonar.coverage.exclusions>**/dtos/*.*</sonar.coverage.exclusions>      
+ 				<sonar.coverage.exclusions>**/domain/*.*</sonar.coverage.exclusions>      
+ 				<sonar.coverage.exclusions>**/services/MessageService.java</sonar.coverage.exclusions>                 
             </properties>
         </profile>
     </profiles> 

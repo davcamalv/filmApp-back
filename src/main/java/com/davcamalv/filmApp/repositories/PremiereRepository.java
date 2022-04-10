@@ -13,7 +13,7 @@ import com.davcamalv.filmApp.domain.Premiere;
 @Repository
 public interface PremiereRepository extends JpaRepository<Premiere, Long> {
 
-	@Query("select p from Premiere p where (:date is null or p.premiereDate = :date) and (:platformId is null or p.platform.id = :platformId)")
+	@Query("select p from Premiere p where (p.premiereDate = :date) and (:platformId is null or p.platform.id = :platformId)")
 	List<Premiere> findByPremiereDate(@Param("date") Date date, @Param("platformId") Long platformId);
 
 }

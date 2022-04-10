@@ -39,4 +39,8 @@ public class PlatformService {
 	public List<Platform> findAll(){
 		return platformRepository.findAll();
 	}
+
+	public Optional<Platform> findOne(Long i) {
+		return platformRepository.findById(i);
+	}
 }

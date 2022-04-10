@@ -22,6 +22,7 @@ import com.davcamalv.filmApp.dtos.SearchDTO;
 import com.davcamalv.filmApp.enums.MediaType;
 import com.davcamalv.filmApp.services.JustWatchService;
 import com.davcamalv.filmApp.services.MediaContentService;
+import com.davcamalv.filmApp.services.PremiereService;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -34,6 +35,9 @@ public class JustWatchServiceTest {
 
 	@Autowired
 	MediaContentService mediaContentService;
+	
+	@Autowired
+	PremiereService premiereService;
 
 	@Test
 	public void getSearchesTest() {
@@ -85,6 +89,15 @@ public class JustWatchServiceTest {
 		assertFalse(mediaContent.getBuy().isEmpty());
 		assertFalse(mediaContent.getRent().isEmpty());
 		assertFalse(mediaContent.getStream().isEmpty());
+		MediaContentDTO mediaContentWithSearchPerformed = justWatchService.getMediaContent("https://www.justwatch.com/es/pelicula/shrek");
+		assertNotEquals(mediaContentWithSearchPerformed.getTitle(), null);
+		assertNotEquals(mediaContentWithSearchPerformed.getDescription(), null);
+		assertNotEquals(mediaContentWithSearchPerformed.getCreationDate(), null);
+		assertNotEquals(mediaContentWithSearchPerformed.getPoster(), null);
+		assertNotEquals(mediaContentWithSearchPerformed.getScore(), null);
+		assertFalse(mediaContentWithSearchPerformed.getBuy().isEmpty());
+		assertFalse(mediaContentWithSearchPerformed.getRent().isEmpty());
+		assertFalse(mediaContentWithSearchPerformed.getStream().isEmpty());
 	}
 	
 	@Test
@@ -96,6 +109,14 @@ public class JustWatchServiceTest {
 		assertNotEquals(mediaContent.getCreationDate(), null);
 		assertNotEquals(mediaContent.getPoster(), null);
 		assertNotEquals(mediaContent.getScore(), null);
+	}
+	
+	@Test
+	public void scrapePremieresTest() {
+		int numberOfPremieresBeforeScrape = premiereService.findAll().size();
+		justWatchService.scrapePremieres();
+		int numberOfPremieresAfterScrape = premiereService.findAll().size();
+		assertTrue(numberOfPremieresBeforeScrape < numberOfPremieresAfterScrape);
 	}
 
 }
