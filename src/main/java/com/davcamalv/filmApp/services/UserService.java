@@ -67,7 +67,7 @@ public class UserService {
 				passwordEncoder.encode(newUserDTO.getPassword()), newUserDTO.getEmail());
 		Set<Rol> roles = new HashSet<>();
 		roles.add(rolService.getByRoleName(RoleName.ROLE_USER).get());
-		if (newUserDTO.getRoles().contains("admin")) {
+		if (newUserDTO.getRoles() != null && newUserDTO.getRoles().contains("admin")) {
 			roles.add(rolService.getByRoleName(RoleName.ROLE_ADMIN).get());
 		}
 		user.setRoles(roles);
